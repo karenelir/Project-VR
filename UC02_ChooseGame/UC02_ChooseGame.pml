@@ -8,6 +8,7 @@
         <Dialog name="confirmation_d" src="confirmation_d/confirmation_d.dlg" />
         <Dialog name="select_d" src="select_d/select_d.dlg" />
         <Dialog name="describe_games" src="describe_games/describe_games.dlg" />
+        <Dialog name="spacemarines_mode_d" src="spacemarines_mode_d/spacemarines_mode_d.dlg" />
     </Dialogs>
     <Resources>
         <File name="all" src="html/css/all.css" />
@@ -54,11 +55,17 @@
         <File name="outbreak" src="html/pics/outbreak.png" />
         <File name="spacemarines" src="html/pics/spacemarines.png" />
         <File name="zerovr" src="html/pics/zerovr.png" />
+        <File name="displayvideo" src="html/pages/displayvideo.html" />
+        <File name="farcry" src="html/videos/farcry.mp4" />
+        <File name="outbreak" src="html/videos/outbreak.mp4" />
+        <File name="spacemarines" src="html/videos/spacemarines.mp4" />
+        <File name="spacemarines_mode" src="html/pages/spacemarines_mode.html" />
     </Resources>
     <Topics>
         <Topic name="confirmation_d_enu" src="confirmation_d/confirmation_d_enu.top" topicName="confirmation_d" language="en_US" />
         <Topic name="select_d_enu" src="select_d/select_d_enu.top" topicName="select_d" language="en_US" />
         <Topic name="describe_games_enu" src="describe_games/describe_games_enu.top" topicName="describe_games" language="en_US" />
+        <Topic name="spacemarines_mode_d_enu" src="spacemarines_mode_d/spacemarines_mode_d_enu.top" topicName="spacemarines_mode_d" language="en_US" />
     </Topics>
     <IgnoredPaths />
     <Translations auto-fill="en_US">

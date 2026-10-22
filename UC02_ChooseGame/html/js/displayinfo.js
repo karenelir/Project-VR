@@ -16,8 +16,8 @@ function getUrlParam(param, defaultVal){
 }
 
 function displayPageInformation() {
-    document.getElementById("pageHeading").innerHTML = decodeURI(getUrlParam("pageHeading", ""));
-    document.getElementById("pageText").innerHTML  = decodeURI(getUrlParam("pageText", ""));
+    document.getElementById("pageHeading").innerHTML = decodeURIComponent(getUrlParam("pageHeading", ""));
+    document.getElementById("pageText").innerHTML  = decodeURIComponent(getUrlParam("pageText", ""));
 
     imageName = getUrlParam("pageImage", "");
     if (imageName) {

@@ -72,9 +72,11 @@
             position: absolute; top: 0; left: 0;
             width: 100%; height: 100%; object-fit: cover;
         }
-        /* outbreak.png and farcry.png have a 'Trending' badge on their right side: shift the crop left to hide it */
-        .outbreak .art img { object-position: 27% center; }
-        .farcry .art img { object-position: 25% center; }
+        /* outbreak.png and farcry.png have a 'Trending' badge in the top-right: shift the crop
+           left and down to hide it (the extra Duration fact row shortened the art box, so the old
+           27%/25% horizontal-only shift no longer covers it vertically). */
+        .outbreak .art img { object-position: 15% 65%; }
+        .farcry .art img { object-position: 15% 65%; }
 
         .info { flex: 0 0 auto; padding: 1.4vh 1.7vw 1.8vh 1.7vw; }
         .name { font-size: 3.4vw; font-weight: 800; line-height: 1.05; }
@@ -129,6 +131,7 @@
                 <div class="desc">A deadly virus has hit. Fight hordes of zombies with your team.</div>
                 <div class="fact"><span class="label">Players</span><span class="value">Up to 8</span></div>
                 <div class="fact"><span class="label">Mode</span><span class="value">Team co-op</span></div>
+                <div class="fact"><span class="label">Duration</span><span class="value">30 min</span></div>
             </span>
         </button>
 
@@ -147,6 +150,7 @@
                 <div class="desc">Captured by Vaas on Rook Island. Survive together as a team.</div>
                 <div class="fact"><span class="label">Players</span><span class="value">Up to 8</span></div>
                 <div class="fact"><span class="label">Mode</span><span class="value">Team co-op</span></div>
+                <div class="fact"><span class="label">Duration</span><span class="value">30 min</span></div>
             </span>
         </button>
 
@@ -165,6 +169,7 @@
                 <div class="desc">Warhammer 40,000. Battle the Tyranids and defend Avarax.</div>
                 <div class="fact"><span class="label">Players</span><span class="value">Up to 8</span></div>
                 <div class="fact"><span class="label">Mode</span><span class="value">Team co-op</span></div>
+                <div class="fact"><span class="label">Duration</span><span class="value">30 or 45 min</span></div>
             </span>
         </button>
 

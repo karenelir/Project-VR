@@ -1,0 +1,8 @@
+topic: ~spacemarines_mode_d()
+language: enu
+
+u:([standard "thirty minutes" "thirty minute" "30 minutes" "30 minute" easy]) Standard mode, thirty minutes. \pau=300\ Good luck, soldier! $onStopped=1
+u:([hardcore "forty five minutes" "forty five minute" "45 minutes" "45 minute" hard harder]) Hardcore mode, forty five minutes. \pau=400\Good luck, soldier!  $onStopped=2
+
+u:(e:spacemarines30Selected) Standard mode, thirty minutes. \pau=300\ Good luck, soldier! $onStopped=1
+u:(e:spacemarines45Selected) Hardcore mode, forty five minutes. \pau=400\ Good luck, soldier! $onStopped=2
