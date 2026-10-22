@@ -1,0 +1,18 @@
+topic: ~confirmation_d()
+language: enu
+include: lexicon_enu.top
+
+proposal: %yesProposal ~joyful Hurray! you selected yes
+    $userAnswer=1 
+    I am glad that you liked the interaction $onStopped=1 
+proposal: %noProposal ~neutral You selected no 
+    $userAnswer=0
+    Too bad that you did not like the interaction $onStopped=1
+
+u:(~yes) ^gotoReactivate(yesProposal)
+u:(~no) ^gotoReactivate(noProposal)
+
+u:(e:yesAnswer) ^gotoReactivate(yesProposal)
+u:(e:noAnswer) ^gotoReactivate(noProposal)
+
+

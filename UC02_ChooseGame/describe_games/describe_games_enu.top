@@ -1,0 +1,16 @@
+topic: ~describe_games()
+language: enu
+
+proposal: %describeYes \RSPD=85\ Great! Let me tell you about our three most popular games. \pau=1500\
+    $showImage=outbreak.png Game number one: Outbreak. \pau=800\ This is a zombie game. \pau=500\ A virus has turned people into zombies, \pau=400\ and your team must fight together to survive. \pau=3000\
+    $showImage=farcry.png Game number two: Far Cry V R. \pau=800\ This is a survival adventure on a dangerous island. \pau=500\ A gang of pirates has captured you, \pau=400\ and your team must work together to escape. \pau=3000\
+    $showImage=spacemarines.png Game number three: Space Marine V R. \pau=800\ This is a science fiction battle. \pau=500\ You are a powerful space soldier, \pau=400\ and your team must defend the planet from an alien army. \pau=2000\
+    Those are our top three games! \RST\ $onStopped=1
+
+proposal: %describeNo. Okay, no problem. $onStopped=2
+
+u:([yes "yes please" sure "go ahead" "describe them" okay]) ^gotoReactivate(describeYes)
+u:([no "no thanks" "no thank you" "I already know" skip]) ^gotoReactivate(describeNo)
+
+u:(e:yesAnswer) ^gotoReactivate(describeYes)
+u:(e:noAnswer) ^gotoReactivate(describeNo)

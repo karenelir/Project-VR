@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Choose your game</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <script src="/libs/qi/2/qi.js"></script>
+    <script src="../js/jquery.js"></script>
+    <script src="../js/qievents.js"></script>
+
+    <!-- Written for Pepper's older tablet browser: flexbox only (no CSS grid, no CSS variables, no "gap"),
+         and every size is relative (vw / vh / %) so it scales to whatever screen size the tablet reports. -->
+    <style>
+        * { -webkit-box-sizing: border-box; box-sizing: border-box; }
+        html, body { height: 100%; margin: 0; padding: 0; }
+        body {
+            background: #10131c;
+            color: #f4f1ff;
+            font-family: "Roboto", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            padding: 2.5vh 3vw 2vh 3vw;
+            overflow: hidden;
+            -webkit-user-select: none; user-select: none;
+        }
+
+        header { flex: 0 0 auto; margin-bottom: 2.5vh; }
+        h1 { margin: 0; font-size: 4.4vw; line-height: 1.1; font-weight: 800; }
+        header p { margin: 0.8vh 0 0 0; font-size: 1.9vw; color: #a9afc7; }
+
+        .games {
+            flex: 1 1 auto;
+            min-height: 0;
+            display: flex;
+            flex-direction: row;
+            margin: 0 -0.9vw;          /* cancels the outer card margins */
+        }
+
+        .card {
+            width: 33.33%;
+            margin: 0 0.9vw;
+            padding: 0;
+            border: 0;
+            -webkit-appearance: none;
+            font: inherit; text-align: left; cursor: pointer;
+            border-radius: 2vw;
+            overflow: hidden;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            -webkit-transition: opacity .25s ease; transition: opacity .25s ease;
+        }
+        .card:active { opacity: .85; }
+
+        .outbreak     { color: #13200a; background: linear-gradient(160deg, #b4e25a, #6f9e22); }
+        .farcry       { color: #2a1402; background: linear-gradient(160deg, #ffbe73, #d9731a); }
+        .spacemarines { color: #0c1636; background: linear-gradient(160deg, #a3bcff, #4a6be0); }
+
+        .art {
+            flex: 1 1 auto;
+            min-height: 20vh;
+            position: relative;
+            display: flex; align-items: center; justify-content: center;
+            background: rgba(0, 0, 0, 0.18);
+        }
+        .art svg { width: 30%; height: auto; opacity: .6; }
+        .outbreak .art svg     { stroke: #13200a; }
+        .farcry .art svg       { stroke: #2a1402; }
+        .spacemarines .art svg { stroke: #0c1636; }
+        .art img {
+            position: absolute; top: 0; left: 0;
+            width: 100%; height: 100%; object-fit: cover;
+        }
+        /* outbreak.png and farcry.png have a 'Trending' badge on their right side: shift the crop left to hide it */
+        .outbreak .art img { object-position: 27% center; }
+        .farcry .art img { object-position: 25% center; }
+
+        .info { flex: 0 0 auto; padding: 1.4vh 1.7vw 1.8vh 1.7vw; }
+        .name { font-size: 3.4vw; font-weight: 800; line-height: 1.05; }
+        .style { font-size: 1.6vw; font-weight: 600; margin: 0.4vh 0 0.8vh 0; opacity: .85; }
+        .desc { font-size: 1.45vw; line-height: 1.25; margin: 0 0 1.2vh 0; }
+
+        .fact { display: flex; align-items: baseline; margin-top: 0.4vh; font-size: 1.45vw; }
+        .fact .label { width: 7.5vw; font-weight: 700; }
+        .fact .value { font-weight: 500; }
+
+        /* state after a tap: the chosen card stays, the others fade */
+        .badge {
+            position: absolute; top: 1.4vw; left: 1.4vw;
+            background: #10131c; color: #ffffff;
+            font-size: 1.7vw; font-weight: 700;
+            padding: 0.6vw 1.5vw; border-radius: 3vw;
+            display: none;
+        }
+        .card.chosen { -webkit-box-shadow: 0 0 0 0.5vw #f4f1ff; box-shadow: 0 0 0 0.5vw #f4f1ff; }
+        .card.chosen .badge { display: block; }
+        body.locked .card { pointer-events: none; }
+        body.locked .card.fade { opacity: .3; }
+
+        footer { flex: 0 0 auto; margin-top: 2vh; font-size: 1.7vw; color: #a9afc7; }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>Pick your game</h1>
+        <p>Tap a card, or tell Pepper which game you want.</p>
+    </header>
+
+    <!-- Each card raises an ALMemory event; the select_d dialog listens to it with u:(e:outbreakSelected) etc.
+         Images: html/pics/outbreak.png, farcry.png, spacemarines.png (names are case-sensitive on the robot). -->
+    <div class="games">
+
+        <button type="button" class="card outbreak" id="outbreakButton" onclick="choose(this, 'outbreakSelected')">
+            <span class="badge">Selected</span>
+            <span class="art">
+                <svg viewBox="0 0 100 100" fill="none" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M22 52 C22 28 36 14 50 14 C64 14 78 28 78 52 C78 60 74 64 70 66 L70 80 L30 80 L30 66 C26 64 22 60 22 52 Z"/>
+                    <circle cx="38" cy="50" r="7"/><circle cx="62" cy="50" r="7"/>
+                    <path d="M50 58 L46 68 L54 68 Z"/>
+                    <path d="M40 80 V70 M50 80 V70 M60 80 V70"/>
+                </svg>
+                <img src="../pics/outbreak.png" alt="" onload="this.previousElementSibling.style.visibility='hidden'" onerror="this.style.display='none'">
+            </span>
+            <span class="info">
+                <div class="name">Outbreak</div>
+                <div class="style">Zombie survival</div>
+                <div class="desc">A deadly virus has hit. Fight hordes of zombies with your team.</div>
+                <div class="fact"><span class="label">Players</span><span class="value">Up to 8</span></div>
+                <div class="fact"><span class="label">Mode</span><span class="value">Team co-op</span></div>
+            </span>
+        </button>
+
+        <button type="button" class="card farcry" id="farcryButton" onclick="choose(this, 'farcrySelected')">
+            <span class="badge">Selected</span>
+            <span class="art">
+                <svg viewBox="0 0 100 100" fill="none" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="50" cy="50" r="30"/><circle cx="50" cy="50" r="4"/>
+                    <path d="M50 12 V30 M50 70 V88 M12 50 H30 M70 50 H88"/>
+                </svg>
+                <img src="../pics/farcry.png" alt="" onload="this.previousElementSibling.style.visibility='hidden'" onerror="this.style.display='none'">
+            </span>
+            <span class="info">
+                <div class="name">Far Cry VR</div>
+                <div class="style">Jungle survival</div>
+                <div class="desc">Captured by Vaas on Rook Island. Survive together as a team.</div>
+                <div class="fact"><span class="label">Players</span><span class="value">Up to 8</span></div>
+                <div class="fact"><span class="label">Mode</span><span class="value">Team co-op</span></div>
+            </span>
+        </button>
+
+        <button type="button" class="card spacemarines" id="spacemarinesButton" onclick="choose(this, 'spacemarinesSelected')">
+            <span class="badge">Selected</span>
+            <span class="art">
+                <svg viewBox="0 0 100 100" fill="none" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M50 12 L82 24 V50 C82 70 68 82 50 90 C32 82 18 70 18 50 V24 Z"/>
+                    <path d="M50 30 V68 M34 46 H66"/>
+                </svg>
+                <img src="../pics/spacemarines.png" alt="" onload="this.previousElementSibling.style.visibility='hidden'" onerror="this.style.display='none'">
+            </span>
+            <span class="info">
+                <div class="name">Space Marines</div>
+                <div class="style">Sci-fi combat</div>
+                <div class="desc">Warhammer 40,000. Battle the Tyranids and defend Avarax.</div>
+                <div class="fact"><span class="label">Players</span><span class="value">Up to 8</span></div>
+                <div class="fact"><span class="label">Mode</span><span class="value">Team co-op</span></div>
+            </span>
+        </button>
+
+    </div>
+
+    <footer>Not sure? Say "I don't know" and Pepper will help you narrow it down.</footer>
+
+    <script type="text/javascript">
+        // Mark the tapped card, fade the others, then tell Pepper's dialog which game was chosen.
+        function choose(card, eventName) {
+            if (document.body.className.indexOf("locked") !== -1) { return; }
+            var cards = document.getElementsByClassName("card");
+            for (var i = 0; i < cards.length; i++) {
+                if (cards[i] !== card) { cards[i].className += " fade"; }
+            }
+            card.className += " chosen";
+            document.body.className += " locked";
+            raiseConfirmationEvent(eventName);   // defined in ../js/qievents.js
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,33 @@
+topic: ~select_d()
+language: enu
+
+concept:(outbreak) [outbreak "outbreak origins" zombie zombies]
+concept:(farcry) [farcry "far cry" "far cry V R"]
+concept:(spacemarines) ["space marine" "space marines" warhammer]
+
+
+
+# Steps 4 and 5: choose and confirm, by voice or tablet
+u:(~outbreak) Great choice! You selected Outbreak. $onStopped=1
+u:(~farcry) Great choice! You selected Far Cry. $onStopped=2
+u:(~spacemarines) Great choice! You selected Space Marines. $onStopped=3
+u:(e:outbreakSelected) Great choice! You selected Outbreak. $onStopped=1
+u:(e:farcrySelected) Great choice! You selected Far Cry. $onStopped=2
+u:(e:spacemarinesSelected) Great choice! You selected Space Marines. $onStopped=3
+
+# Extension 3a: more information about one game
+u:(["tell me more about" "what is" describe] ~outbreak) Outbreak Origins is a zombie survival game for up to 8 players. A deadly virus has hit the population, and your team fights hordes of zombies and attacks helicopters. Which game do you want?
+u:(["tell me more about" "what is" describe] ~farcry) Far Cry V R, Dive Into Insanity, takes place on Rook Island. Vaas and his gang capture you, and your team must survive together. Which game do you want?
+u:(["tell me more about" "what is" describe] ~spacemarines) In Warhammer forty thousand Space Marine V R, you play a powerful Space Marine and fight the Tyranids to defend Avarax. Which game do you want?
+
+# Extension 4a: undecided, so offer filters
+u:(["I do not know" "I am not sure" undecided]) I can filter the games for you. By style, by intensity, or by number of players?
+    u1:(style) Do you prefer zombies, jungle survival, or sci fi combat?
+        u2:(zombies) Then Outbreak fits you. Say outbreak, or tap it.
+        u2:(jungle) Then Far Cry fits you. Say far cry, or tap it.
+        u2:("sci fi") Then Space Marines fits you. Say space marines, or tap it.
+    u1:(intensity) Do you want something scary, an adventure, or all out action?
+        u2:(scary) Then Outbreak fits you. Say outbreak, or tap it.
+        u2:(adventure) Then Far Cry fits you. Say far cry, or tap it.
+        u2:(action) Then Space Marines fits you. Say space marines, or tap it.
+    u1:(players) All three games take up to 8 players, so any of them works for your group. Which one do you want?
