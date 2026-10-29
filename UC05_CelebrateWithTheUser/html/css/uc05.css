@@ -1,0 +1,82 @@
+/* UC05 - Celebrate with the User
+   Shared look for all UC05 tablet pages, same visual language as UC02 (confirmation.html / gamelist.html).
+   Written for Pepper's older tablet browser: flexbox only (no CSS grid, no CSS variables, no "gap"),
+   every size relative (vw / vh / %), -webkit- prefixes kept. */
+
+* { -webkit-box-sizing: border-box; box-sizing: border-box; }
+html, body { height: 100%; margin: 0; padding: 0; }
+body {
+    background: #0a0b12;
+    color: #f4f1ff;
+    font-family: "Roboto", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    overflow: hidden;
+    -webkit-user-select: none; user-select: none;
+    position: relative;
+}
+
+/* Full-bleed blurred backdrop (game art or logo), plus a dark shade on top */
+.backdrop {
+    position: absolute; top: -4%; left: -4%; right: -4%; bottom: -4%;
+    background-position: center; background-size: cover;
+    -webkit-filter: blur(14px) brightness(0.42) saturate(1.2);
+    filter: blur(14px) brightness(0.42) saturate(1.2);
+}
+.backdrop-shade {
+    position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(180deg, rgba(10,11,18,0.88) 0%, rgba(10,11,18,0.72) 100%);
+}
+
+.stage {
+    position: relative; height: 100%;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 4vh 5vw; text-align: center;
+}
+
+.kicker {
+    display: inline-block;
+    font-size: 1.15vw; font-weight: 700; letter-spacing: 4px; text-transform: uppercase;
+    color: #6ee7ff;
+    padding-bottom: 0.5vh; border-bottom: 2px solid rgba(110,231,255,0.5);
+    margin-bottom: 2.2vh;
+}
+h1 {
+    font-size: 4vw; line-height: 1.1; font-weight: 800; margin: 0 0 1.4vh 0;
+    text-shadow: 0 0.3vw 1.5vw rgba(0,0,0,0.5);
+}
+.subtitle { font-size: 1.7vw; line-height: 1.4; color: #c3c7de; margin: 0 0 4vh 0; max-width: 60vw; }
+.hint { font-size: 1.3vw; color: #8f95b2; margin-top: 3.5vh; }
+
+/* Chamfered buttons, same shape as UC02 */
+.btn {
+    -webkit-appearance: none; border: 0; cursor: pointer; font: inherit;
+    font-weight: 800; font-size: 1.7vw; letter-spacing: 1.5px; text-transform: uppercase;
+    padding: 2.1vh 3vw; color: #f4f1ff;
+    background: rgba(255,255,255,0.07);
+    border: 2px solid rgba(255,255,255,0.2);
+    -webkit-clip-path: polygon(1.1vw 0, 100% 0, 100% calc(100% - 1.1vw), calc(100% - 1.1vw) 100%, 0 100%, 0 1.1vw);
+    clip-path: polygon(1.1vw 0, 100% 0, 100% calc(100% - 1.1vw), calc(100% - 1.1vw) 100%, 0 100%, 0 1.1vw);
+    -webkit-transition: -webkit-transform .12s ease, opacity .25s ease;
+    transition: transform .12s ease, opacity .25s ease;
+}
+.btn:active { -webkit-transform: scale(0.94); transform: scale(0.94); }
+.btn.primary { background: linear-gradient(135deg, #39e2c6, #1f9ad6); color: #06151a; border-color: transparent; }
+.btn.ghost { background: transparent; color: #c3c7de; border-color: rgba(195,199,222,0.35); font-size: 1.4vw; padding: 1.6vh 2.4vw; }
+.btn.chosen { -webkit-box-shadow: 0 0 0 0.4vw #6ee7ff; box-shadow: 0 0 0 0.4vw #6ee7ff; }
+
+/* After a tap: lock the page so a second tap cannot raise a second event */
+body.locked .btn { pointer-events: none; }
+body.locked .btn.fade { opacity: .3; }
+
+.row { display: flex; flex-direction: row; align-items: center; justify-content: center; }
+.row .btn { margin: 0 0.8vw; }
+
+/* Pulsing dots ("checking...") */
+.dots span {
+    display: inline-block; width: 1.2vw; height: 1.2vw; margin: 0 0.5vw; border-radius: 50%;
+    background: #6ee7ff; opacity: .25;
+    -webkit-animation: blink 1.2s infinite; animation: blink 1.2s infinite;
+}
+.dots span:nth-child(2) { -webkit-animation-delay: .2s; animation-delay: .2s; }
+.dots span:nth-child(3) { -webkit-animation-delay: .4s; animation-delay: .4s; }
+@-webkit-keyframes blink { 0%, 100% { opacity: .25; } 50% { opacity: 1; } }
+@keyframes blink { 0%, 100% { opacity: .25; } 50% { opacity: 1; } }

@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Staff - enter result</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="../css/uc05.css">
+    <script src="/libs/qi/2/qi.js"></script>
+    <script src="../js/jquery.js"></script>
+    <script src="../js/qievents.js"></script>
+    <script src="../js/uc05.js"></script>
+    <style>
+        .stage { justify-content: flex-start; padding-top: 5vh; }
+        h1 { font-size: 3vw; }
+        .subtitle { margin-bottom: 3vh; font-size: 1.45vw; }
+        .group { margin-bottom: 2.6vh; }
+        .label { font-size: 1.1vw; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: #8f95b2; margin-bottom: 1.2vh; }
+        .opt { font-size: 1.4vw; padding: 1.6vh 2.2vw; }
+        .opt.on { background: rgba(110,231,255,0.18); border-color: #6ee7ff; color: #6ee7ff; }
+        input.field {
+            font: inherit; font-size: 1.8vw; width: 16vw; padding: 1.3vh 1.2vw; margin: 0 0.8vw;
+            background: rgba(255,255,255,0.06); color: #f4f1ff;
+            border: 2px solid rgba(255,255,255,0.25); border-radius: 0.6vw; text-align: center;
+        }
+        input.field.wide { width: 24vw; }
+        .actions { margin-top: 1.5vh; }
+        #error { color: #ff9a9a; font-size: 1.3vw; height: 2.5vh; margin-top: 1vh; }
+    </style>
+</head>
+<!-- UC05 requirement: "accept manual staff input". Shown only when no result arrived automatically.
+     Submit -> ALMemory event  staffResult = "outcome|game|score|team"
+     No result -> ALMemory event staffSkip (extension 2a) -->
+<body>
+    <div class="backdrop" id="backdrop"></div>
+    <div class="backdrop-shade"></div>
+    <div class="stage">
+        <span class="kicker">Staff only</span>
+        <h1>Enter the team's result</h1>
+        <p class="subtitle">The venue system did not send a result. Enter it here, or tap "No result".</p>
+
+        <div class="group">
+            <div class="label">Outcome</div>
+            <div class="row" id="outcomeRow">
+                <button type="button" class="btn opt" data-v="win" onclick="pick('outcome', this)">Team won</button>
+                <button type="button" class="btn opt" data-v="lose" onclick="pick('outcome', this)">Low score</button>
+                <button type="button" class="btn opt" data-v="tie" onclick="pick('outcome', this)">Tie / mixed</button>
+            </div>
+        </div>
+        <div class="group">
+            <div class="label">Game</div>
+            <div class="row" id="gameRow">
+                <button type="button" class="btn opt" data-v="Outbreak" onclick="pick('game', this)">Outbreak</button>
+                <button type="button" class="btn opt" data-v="Far Cry" onclick="pick('game', this)">Far Cry VR</button>
+                <button type="button" class="btn opt" data-v="Space Marines" onclick="pick('game', this)">Space Marines</button>
+            </div>
+        </div>
+        <div class="group row">
+            <input type="number" id="score" class="field" placeholder="Score">
+            <input type="text" id="team" class="field wide" placeholder="Team name (optional)" maxlength="24">
+        </div>
+        <div class="row actions">
+            <button type="button" class="btn ghost" onclick="skip()">No result</button>
+            <button type="button" class="btn primary" onclick="submitResult()">Send to Pepper</button>
+        </div>
+        <div id="error"></div>
+    </div>
+    <script type="text/javascript">
+        uc05SetBackdrop("backdrop", "../pics/zerovr.png");
+        var chosen = { outcome: "", game: "" };
+        var sent = false;
+
+        function pick(kind, btn) {
+            var row = document.getElementById(kind + "Row").getElementsByTagName("button");
+            for (var i = 0; i < row.length; i++) { row[i].className = row[i].className.replace(" on", ""); }
+            btn.className += " on";
+            chosen[kind] = btn.getAttribute("data-v");
+        }
+        function submitResult() {
+            if (sent) { return; }
+            if (!chosen.outcome || !chosen.game) {
+                document.getElementById("error").innerHTML = "Please choose an outcome and a game.";
+                return;
+            }
+            var score = document.getElementById("score").value.replace(/[^0-9]/g, "");
+            var team = document.getElementById("team").value.replace(/\|/g, " ");
+            sent = true;
+            document.body.className += " locked";
+            raiseEvent("staffResult", chosen.outcome + "|" + chosen.game + "|" + score + "|" + team);
+        }
+        function skip() {
+            if (sent) { return; }
+            sent = true;
+            document.body.className += " locked";
+            raiseEvent("staffSkip", 1);
+        }
+    </script>
+</body>
+</html>
