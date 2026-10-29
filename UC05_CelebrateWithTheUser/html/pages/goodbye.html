@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>See you soon</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="../css/uc05.css">
+    <script src="../js/uc05.js"></script>
+    <style>
+        h1 { font-size: 5vw; }
+        .kicker { font-size: 2.6vw; letter-spacing: 6px; padding-bottom: 1vh; border-bottom-width: 3px; margin-bottom: 3vh; }
+        .wave { display: inline-block; -webkit-transform-origin: 70% 70%; transform-origin: 70% 70%;
+                -webkit-animation: wave 1.8s ease-in-out infinite; animation: wave 1.8s ease-in-out infinite; }
+        @-webkit-keyframes wave { 0%, 60%, 100% { -webkit-transform: rotate(0); } 15%, 45% { -webkit-transform: rotate(14deg); } 30% { -webkit-transform: rotate(-8deg); } }
+        @keyframes wave { 0%, 60%, 100% { transform: rotate(0); } 15%, 45% { transform: rotate(14deg); } 30% { transform: rotate(-8deg); } }
+    </style>
+</head>
+<!-- UC05 step 7: thanks and friendly farewell. -->
+<body>
+    <div class="backdrop" id="backdrop"></div>
+    <div class="backdrop-shade"></div>
+    <div class="stage">
+        <span class="kicker">Thank you</span>
+        <h1>See you on your next mission! <span class="wave">&#128075;</span></h1>
+        <p class="subtitle">Thanks for playing with us today. Have a great rest of your day!</p>
+    </div>
+    <script type="text/javascript">
+        uc05SetBackdrop("backdrop", "../pics/zerovr.png");
+    </script>
+</body>
+</html>

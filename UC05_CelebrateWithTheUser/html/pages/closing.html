@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Session complete</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="../css/uc05.css">
+    <script src="../js/uc05.js"></script>
+    <style>
+        .check {
+            width: 9vw; height: 9vw; border-radius: 50%;
+            border: 0.4vw solid #39e2c6; margin-bottom: 3.5vh;
+            display: flex; align-items: center; justify-content: center;
+            -webkit-box-shadow: 0 0 3vw rgba(57,226,198,0.35); box-shadow: 0 0 3vw rgba(57,226,198,0.35);
+        }
+        .check svg { width: 50%; height: 50%; stroke: #39e2c6; }
+    </style>
+</head>
+<!-- UC05 step 1: Pepper indicates that the customer's game session is closed. -->
+<body>
+    <div class="backdrop" id="backdrop"></div>
+    <div class="backdrop-shade"></div>
+    <div class="stage">
+        <div class="check">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12 L10 18 L20 6"/></svg>
+        </div>
+        <span class="kicker">Session complete</span>
+        <h1>Welcome back, team!</h1>
+        <p class="subtitle">Your game session is now closed. Pepper is checking your results.</p>
+        <div class="dots"><span></span><span></span><span></span></div>
+    </div>
+    <script type="text/javascript">
+        uc05SetBackdrop("backdrop", "../pics/zerovr.png");
+    </script>
+</body>
+</html>

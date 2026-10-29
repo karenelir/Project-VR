@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Your team photo</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="../css/uc05.css">
+    <script src="../js/uc05.js"></script>
+    <style>
+        .stage { flex-direction: row; }
+        .frame {
+            flex: 0 0 auto; background: #f4f1ff; padding: 1.2vw 1.2vw 5vh 1.2vw;
+            -webkit-transform: rotate(-2.5deg); transform: rotate(-2.5deg);
+            -webkit-box-shadow: 0 1.5vw 4vw rgba(0,0,0,0.6); box-shadow: 0 1.5vw 4vw rgba(0,0,0,0.6);
+            -webkit-animation: drop .7s ease-out both; animation: drop .7s ease-out both;
+        }
+        .frame .pic { width: 44vw; height: 33vw; background: #1a1d2b center / cover no-repeat;
+                      display: flex; align-items: center; justify-content: center; }
+        .frame .pic svg { width: 22%; stroke: #6ee7ff; opacity: .7; }
+        .frame .caption { color: #10131c; font-size: 1.7vw; font-weight: 700; margin-top: 2vh; text-align: center; }
+        .side { padding-left: 5vw; text-align: left; max-width: 36vw; }
+        .side h1 { font-size: 3.6vw; }
+        @-webkit-keyframes drop { 0% { -webkit-transform: translateY(-8vh) rotate(-8deg); opacity: 0; } 100% { -webkit-transform: rotate(-2.5deg); opacity: 1; } }
+        @keyframes drop { 0% { transform: translateY(-8vh) rotate(-8deg); opacity: 0; } 100% { transform: rotate(-2.5deg); opacity: 1; } }
+    </style>
+</head>
+<!-- UC05 step 4 result. URL parameters: photo (path under ../pics/, e.g. photos/team_123.jpg), game.
+     With no photo (camera not available / simulated prototype) a placeholder is shown instead. -->
+<body>
+    <div class="backdrop" id="backdrop"></div>
+    <div class="backdrop-shade"></div>
+    <div class="stage">
+        <div class="frame">
+            <div class="pic" id="pic">
+                <svg id="placeholder" viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 8 H7 L9 5 H15 L17 8 H21 V19 H3 Z"/><circle cx="12" cy="13" r="3.5"/>
+                </svg>
+            </div>
+            <div class="caption" id="caption">Team photo</div>
+        </div>
+        <div class="side">
+            <span class="kicker">Got it</span>
+            <h1>Looking great, team!</h1>
+            <p class="subtitle" id="sub">A moment to remember from your mission.</p>
+        </div>
+    </div>
+    <script type="text/javascript">
+        var photo = uc05Param("photo", "");
+        var game = uc05Param("game", "");
+        uc05SetBackdrop("backdrop", uc05GameArt(game));
+        var d = new Date();
+        document.getElementById("caption").innerHTML = (game ? uc05Esc(game) + " &middot; " : "") + d.toLocaleDateString();
+        if (photo) {
+            var img = new Image();
+            img.onload = function () {
+                document.getElementById("pic").style.backgroundImage = "url('" + img.src + "')";
+                document.getElementById("placeholder").style.display = "none";
+            };
+            img.src = "../pics/" + photo;
+        } else {
+            document.getElementById("sub").innerHTML = "Camera simulated in this prototype.";
+        }
+    </script>
+</body>
+</html>
