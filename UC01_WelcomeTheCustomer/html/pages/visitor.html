@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>First time here?</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="../css/uc01.css">
+    <script src="/libs/qi/2/qi.js"></script>
+    <script src="../js/jquery.js"></script>
+    <script src="../js/qievents.js"></script>
+    <script src="../js/uc01.js"></script>
+    <style>
+        .choices { display: flex; flex-direction: row; justify-content: center; }
+        .choice { width: 27vw; margin: 0 1vw; padding: 4vh 1.5vw; text-transform: none; letter-spacing: 0.5px; font-size: 2.8vw; }
+        .choice svg { display: block; width: 4.5vw; height: 4.5vw; margin: 0 auto 1.8vh auto; }
+        .choice small { display: block; font-size: 1.75vw; font-weight: 500; margin-top: 1vh; opacity: .75; }
+        #newBtn svg { stroke: #06151a; }
+        #backBtn svg, #mixedBtn svg { stroke: #6ee7ff; }
+        #mixedBtn { display: none; }
+        #hint { display: none; color: #ffd45e; font-size: 2.24vw; font-weight: 700; margin-bottom: 2.5vh; }
+        body.hint .choice { -webkit-animation: nudge 1.4s ease-in-out infinite; animation: nudge 1.4s ease-in-out infinite; }
+        body.hint #hint { display: block; }
+        @-webkit-keyframes nudge { 0%, 100% { -webkit-transform: scale(1); } 50% { -webkit-transform: scale(1.04); } }
+        @keyframes nudge { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.04); } }
+    </style>
+</head>
+<!-- UC01 steps 3-4 (and 3a1 for a group, 4a1 with ?hint=1).
+     The group version (third button "Some of us") is chosen automatically from ALMemory UC01/GroupSize.
+     First time -> yesAnswer, Been here before -> noAnswer, Some of us -> mixedAnswer (listened to by visitor_d). -->
+<body>
+    <div class="backdrop" id="backdrop"></div>
+    <div class="backdrop-shade"></div>
+    <div class="stage">
+        <span class="kicker" id="kicker">Quick question</span>
+        <h1 id="question">Is this your first time here?</h1>
+        <p class="subtitle" id="sub">Tell Pepper, or tap your answer.</p>
+        <div id="hint">Pepper didn't catch that. Tap your answer here!</div>
+        <div class="choices">
+            <button type="button" id="newBtn" class="btn primary choice" onclick="uc01Choose(this, 'yesAnswer', 1)">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 L14.6 9 L21 9.5 L16 13.8 L17.6 20 L12 16.6 L6.4 20 L8 13.8 L3 9.5 L9.4 9 Z"/></svg>
+                <span id="newLabel">Yes, first time</span><small id="newSmall">I'm new to free-roam VR</small>
+            </button>
+            <button type="button" id="mixedBtn" class="btn choice" onclick="uc01Choose(this, 'mixedAnswer', 1)">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="3"/><circle cx="16" cy="8" r="3"/><path d="M2 20 C2 15 5 13 8 13 C11 13 14 15 14 20 M12 13.5 C13 13.2 14.5 13 16 13 C19 13 22 15 22 20"/></svg>
+                Some of us<small>A mix of new and returning</small>
+            </button>
+            <button type="button" id="backBtn" class="btn choice" onclick="uc01Choose(this, 'noAnswer', 1)">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12 A8 8 0 1 0 7 5.8"/><path d="M4 4 V8 H8"/></svg>
+                <span id="backLabel">No, been here before</span><small id="backSmall">Welcome me back</small>
+            </button>
+        </div>
+    </div>
+    <script type="text/javascript">
+        uc01SetBackdrop("backdrop", "../pics/zerovr.png");
+        if (uc01Param("hint", "") === "1") { document.body.className += " hint"; }
+
+        function groupMode(count) {
+            if (parseInt(count, 10) < 2) { return; }
+            document.getElementById("question").innerHTML = "Is anyone in your group new?";
+            document.getElementById("sub").innerHTML = "New to free-roam VR? Tell Pepper, or tap an answer.";
+            document.getElementById("newLabel").innerHTML = "Yes, all of us";
+            document.getElementById("newSmall").innerHTML = "Everyone is new";
+            document.getElementById("backLabel").innerHTML = "No, none of us";
+            document.getElementById("backSmall").innerHTML = "We've all been here";
+            document.getElementById("mixedBtn").style.display = "block";
+        }
+        // ?group=N forces the group version (useful for testing in a desktop browser)
+        if (uc01Param("group", "")) { groupMode(uc01Param("group", "")); }
+
+        QiSession(function (session) {
+            session.service("ALMemory").then(function (mem) {
+                mem.getData("UC01/GroupSize").then(groupMode, function () {});
+            }, function (error) { console.log("ALMemory error: " + error); });
+        }, function () { console.log("disconnected"); });
+    </script>
+</body>
+</html>

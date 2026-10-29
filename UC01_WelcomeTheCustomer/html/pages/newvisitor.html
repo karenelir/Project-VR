@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Welcome to free-roam VR</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="../css/uc01.css">
+    <script src="../js/uc01.js"></script>
+    <style>
+        h1 { font-size: 4.56vw; }
+        .subtitle { margin-bottom: 4.5vh; }
+        .cards { display: flex; flex-direction: row; justify-content: center; }
+        .card {
+            width: 28vw; margin: 0 1vw; padding: 3.5vh 2vw; text-align: left;
+            background: rgba(255,255,255,0.06); border: 2px solid rgba(255,255,255,0.16);
+            -webkit-clip-path: polygon(1.4vw 0, 100% 0, 100% calc(100% - 1.4vw), calc(100% - 1.4vw) 100%, 0 100%, 0 1.4vw);
+            clip-path: polygon(1.4vw 0, 100% 0, 100% calc(100% - 1.4vw), calc(100% - 1.4vw) 100%, 0 100%, 0 1.4vw);
+            opacity: 0; -webkit-animation: rise .6s ease-out forwards; animation: rise .6s ease-out forwards;
+        }
+        .card:nth-child(1) { -webkit-animation-delay: 3s; animation-delay: 3s; }
+        .card:nth-child(2) { -webkit-animation-delay: 9s; animation-delay: 9s; }
+        .card:nth-child(3) { -webkit-animation-delay: 15s; animation-delay: 15s; }
+        .card svg { width: 3.6vw; height: 3.6vw; stroke: #6ee7ff; margin-bottom: 1.6vh; }
+        .card h3 { font-size: 2.66vw; margin: 0 0 1vh 0; letter-spacing: 0.5px; }
+        .card p { font-size: 1.89vw; line-height: 1.45; color: #c3c7de; margin: 0; }
+        .next { margin-top: 4.5vh; font-size: 1.96vw; color: #8f95b2; letter-spacing: 2px; text-transform: uppercase; }
+        .next b { color: #39e2c6; }
+        @-webkit-keyframes rise { 0% { opacity: 0; -webkit-transform: translateY(3vh); } 100% { opacity: 1; -webkit-transform: none; } }
+        @keyframes rise { 0% { opacity: 0; transform: translateY(3vh); } 100% { opacity: 1; transform: none; } }
+    </style>
+</head>
+<!-- UC01 step 5a: longer introduction to the venue and free-roam VR.
+     ?mixed=1 -> group with both new and returning players (open issue). The cards appear one by one,
+     roughly in time with Pepper's speech. -->
+<body>
+    <div class="backdrop" id="backdrop"></div>
+    <div class="backdrop-shade"></div>
+    <div class="stage">
+        <span class="kicker" id="kicker">New to free-roam VR</span>
+        <h1 id="title">Welcome, first-timer!</h1>
+        <p class="subtitle" id="sub">Here is how free-roam virtual reality works.</p>
+        <div class="cards">
+            <div class="card">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13" cy="4" r="2"/><path d="M10 21 L12 15 L9 12 L11 7 L15 9 L17 12 M12 15 L15 17 L16 21 M11 7 L7 9 L6 12"/></svg>
+                <h3>Walk freely</h3>
+                <p>No cables, no standing still. You move around a huge arena with a headset and a light backpack.</p>
+            </div>
+            <div class="card">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="3"/><circle cx="16" cy="8" r="3"/><path d="M2 20 C2 15 5 13 8 13 C11 13 14 15 14 20 M12 13.5 C13 13.2 14.5 13 16 13 C19 13 22 15 22 20"/></svg>
+                <h3>Play together</h3>
+                <p>Team up with up to 8 friends. You see each other inside the game and fight side by side.</p>
+            </div>
+            <div class="card">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 L20 6 V12 C20 16.5 16.5 19.5 12 21 C7.5 19.5 4 16.5 4 12 V6 Z"/><path d="M8.5 12 L11 14.5 L15.5 9.5"/></svg>
+                <h3>Safe &amp; guided</h3>
+                <p>Our staff fit your gear and watch over the arena, so you can just enjoy the game.</p>
+            </div>
+        </div>
+        <div class="next">Next: <b>check-in</b></div>
+    </div>
+    <script type="text/javascript">
+        uc01SetBackdrop("backdrop", "../pics/zerovr.png");
+        if (uc01Param("mixed", "") === "1") {
+            document.getElementById("kicker").innerHTML = "Welcome, everyone";
+            document.getElementById("title").innerHTML = "Welcome back, and welcome!";
+            document.getElementById("sub").innerHTML = "A quick refresher for our regulars, and the basics for our first-timers.";
+        }
+    </script>
+</body>
+</html>

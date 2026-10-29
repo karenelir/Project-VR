@@ -1,0 +1,37 @@
+topic: ~visitor_d()
+language: enu
+
+# UC01 - Step 4: the customer (or the group) says whether this is their first time.
+# The question is asked by "Ask First Time (step 3)" or "Ask Group (3a1)"; this topic only listens.
+# Tablet: visitor.html raises yesAnswer / noAnswer / mixedAnswer.
+# Outputs of the dialog box:
+#   $visitorStatus = new | returning | mixed   -> Save Visitor Status (routes to 5a / 5b)
+#   $showButtons                               -> re-shows visitor.html highlighting the buttons (4a1)
+
+# ---------- answers ----------
+# "yes": first time (single customer), or someone in the group is new (3a2.a)
+concept:(firstTime) [yes yeah yep sure "yes it is" "yes we are" "yes I am" "first time" "it's my first time" "my first time" "it's our first time" "our first time" "I'm new" "we're new" "we are new" "I am new" "never been here" "I've never been here" "we've never been here" "never" "all of us" "everyone" "we all are" "all new"]
+
+# "no": returning customer (single), or nobody in the group is new (3a2.b)
+concept:(returning) [no nope "no it's not" "not my first time" "not our first time" "I've been here before" "we've been here before" "been here before" "I'm back" "we're back" "we came before" "I came before" "returning" "none of us" "no one" nobody "we've all been here" "we have all been here" "not really"]
+
+# Open issue: a group whose members answer differently
+concept:(mixed) ["some of us" "a few of us" "one of us" "two of us" "half of us" "just one" "just me" "only me" "only one" "some are" "some of them" "my friend is" "my friends are" "he is" "she is" "they are" "it's his first time" "it's her first time" "it's their first time" "yes and no" "both"]
+
+u:(~mixed) $visitorStatus=mixed $onStopped=1
+u:(~firstTime) $visitorStatus=new $onStopped=1
+u:(~returning) $visitorStatus=returning $onStopped=1
+
+u:(e:yesAnswer) $visitorStatus=new $onStopped=1
+u:(e:noAnswer) $visitorStatus=returning $onStopped=1
+u:(e:mixedAnswer) $visitorStatus=mixed $onStopped=1
+
+# ---------- extension 4a: the answer is not recognized ----------
+# 4a1: ask politely to repeat and point to the Yes / No buttons on the tablet (4a2 -> back to step 5)
+u:(e:Dialog/NotUnderstood) ^rand["Sorry, I didn't quite catch that." "Oops, I missed that."] \pau=200\ Is this a first visit? Just say yes or no, \pau=200\ or tap your answer on my tablet. $showButtons=1
+
+u:(e:Dialog/NotSpeaking15) Take your time! \pau=200\ You can say yes or no, or tap your answer on my tablet. $showButtons=1
+
+u:(["what" pardon sorry "can you repeat" "repeat please" "say that again" "what did you say"]) Of course! \pau=200\ I asked if this is your first time with us. \pau=200\ Yes, or no?
+
+u:(["what is free roam" "what is free roam VR" "what does free roam mean"]) Free roam means you walk around freely in a big arena while you play. \pau=300\ So, is this your first time here?

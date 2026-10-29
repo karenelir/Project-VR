@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Welcome</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="../css/uc01.css">
+    <script src="/libs/qi/2/qi.js"></script>
+    <script src="../js/jquery.js"></script>
+    <script src="../js/qievents.js"></script>
+    <script src="../js/uc01.js"></script>
+    <style>
+        .logo { width: 46vw; height: 27vw; background: url('../pics/zerovr.png') center / cover no-repeat; }
+        .stage { background: #000; }
+        h1 { font-size: 5.06vw; }
+        #start { font-size: 2.8vw; padding: 2.6vh 4.5vw; margin-top: 1vh;
+                 -webkit-animation: pulse 2.2s ease-in-out infinite; animation: pulse 2.2s ease-in-out infinite; }
+        @-webkit-keyframes pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(57,226,198,0.45); } 50% { box-shadow: 0 0 2.5vw 0.3vw rgba(57,226,198,0.35); } }
+        @keyframes pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(57,226,198,0.45); } 50% { box-shadow: 0 0 2.5vw 0.3vw rgba(57,226,198,0.35); } }
+        #hello { display: none; }
+        .wave { display: inline-block; -webkit-transform-origin: 70% 70%; transform-origin: 70% 70%;
+                -webkit-animation: wave 1.8s ease-in-out infinite; animation: wave 1.8s ease-in-out infinite; }
+        @-webkit-keyframes wave { 0%, 60%, 100% { -webkit-transform: rotate(0); } 15%, 45% { -webkit-transform: rotate(14deg); } 30% { -webkit-transform: rotate(-8deg); } }
+        @keyframes wave { 0%, 60%, 100% { transform: rotate(0); } 15%, 45% { transform: rotate(14deg); } 30% { transform: rotate(-8deg); } }
+    </style>
+</head>
+<!-- UC01 precondition / step 1-2.
+     Idle: attract screen with a "Tap to start" fallback (raises customerTapped).
+     When "Wait For Customer" detects someone it raises customerDetected (value = number of people)
+     and this page switches to the greeting (step 2). -->
+<body>
+    <div class="stage">
+        <div class="logo"></div>
+        <div id="idle">
+            <p class="subtitle">Pepper is ready to welcome you. Come closer, or tap below.</p>
+            <button type="button" id="start" class="btn primary" onclick="uc01Choose(this, 'customerTapped', 1)">Tap to start</button>
+        </div>
+        <div id="hello">
+            <span class="kicker">Welcome</span>
+            <h1 id="helloTitle">Hello! <span class="wave">&#128075;</span></h1>
+            <p class="subtitle">I'm Pepper, your host for today.</p>
+        </div>
+    </div>
+    <script type="text/javascript">
+        function greet(count) {
+            document.getElementById("idle").style.display = "none";
+            document.getElementById("hello").style.display = "block";
+            if (parseInt(count, 10) >= 2) {
+                document.getElementById("helloTitle").innerHTML = 'Hello everyone! <span class="wave">&#128075;</span>';
+            }
+        }
+        QiSession(function (session) {
+            session.service("ALMemory").then(function (mem) {
+                mem.subscriber("customerDetected").then(function (sub) { sub.signal.connect(greet); });
+            }, function (error) { console.log("ALMemory error: " + error); });
+        }, function () { console.log("disconnected"); });
+    </script>
+</body>
+</html>

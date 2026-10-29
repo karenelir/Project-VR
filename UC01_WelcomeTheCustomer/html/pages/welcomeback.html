@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Welcome back</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="../css/uc01.css">
+    <script src="../js/uc01.js"></script>
+    <style>
+        h1 { font-size: 6.6vw; color: #39e2c6; text-shadow: 0 0 3vw rgba(57,226,198,0.35);
+             -webkit-animation: pop .6s ease-out both; animation: pop .6s ease-out both; }
+        .subtitle { font-size: 2.8vw; }
+        .next { margin-top: 3vh; font-size: 1.96vw; color: #8f95b2; letter-spacing: 2px; text-transform: uppercase; }
+        .next b { color: #39e2c6; }
+        @-webkit-keyframes pop { 0% { -webkit-transform: scale(.6); opacity: 0; } 70% { -webkit-transform: scale(1.06); opacity: 1; } 100% { -webkit-transform: scale(1); } }
+        @keyframes pop { 0% { transform: scale(.6); opacity: 0; } 70% { transform: scale(1.06); opacity: 1; } 100% { transform: scale(1); } }
+    </style>
+</head>
+<!-- UC01 step 5b: shorter welcome-back for returning customers. -->
+<body>
+    <div class="backdrop" id="backdrop"></div>
+    <div class="backdrop-shade"></div>
+    <div class="stage">
+        <span class="kicker">Returning player</span>
+        <h1>Welcome back!</h1>
+        <p class="subtitle">Great to see you again. Ready for another mission?</p>
+        <div class="next">Next: <b>check-in</b></div>
+    </div>
+    <script type="text/javascript">
+        uc01SetBackdrop("backdrop", "../pics/spacemarines.png");
+    </script>
+</body>
+</html>

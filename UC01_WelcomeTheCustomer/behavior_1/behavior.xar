@@ -1,0 +1,838 @@
+<?xml version="1.0" encoding="UTF-8" ?><ChoregrapheProject xmlns="http://www.aldebaran-robotics.com/schema/choregraphe/project.xsd" xar_version="3"><Box name="root" id="-1" localization="8" tooltip="Root box of Choregraphe&apos;s behavior. Highest level possible." x="0" y="0"><bitmap>media/images/box/root.png</bitmap><script language="4"><content><![CDATA[]]></content></script><Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="Signal sent when diagram is loaded." id="1" /><Input name="onStart" type="1" type_size="1" nature="2" inner="0" tooltip="Box behavior starts when a signal is received on this input." id="2" /><Input name="onStop" type="1" type_size="1" nature="3" inner="0" tooltip="Box behavior stops when a signal is received on this input." id="3" /><Output name="onStopped" type="1" type_size="1" nature="1" inner="0" tooltip="Signal sent when box behavior is finished." id="4" /><Timeline enable="0"><BehaviorLayer name="behavior_layer1"><BehaviorKeyframe name="keyframe1" index="1"><Diagram scale="100"><Box name="Init" id="1" localization="8" tooltip="UC01 - stand posture, awareness on, neutral eyes." x="40" y="60"><bitmap>media/images/box/box-python-script.png</bitmap><script language="4"><content><![CDATA[class MyClass(GeneratedClass):
+    """UC01 - Init (PRECOND-1): Pepper is powered on and idle in the reception area.
+    Stand posture, neutral eyes, basic awareness ON so Pepper looks at people who approach."""
+
+    def __init__(self):
+        GeneratedClass.__init__(self, False)
+
+    def onLoad(self):
+        pass
+
+    def onUnload(self):
+        pass
+
+    def onInput_onStart(self):
+        try:
+            posture = ALProxy("ALRobotPosture")
+            posture.setMaxTryNumber(3)
+            posture.goToPosture("Stand", 0.8)
+        except Exception as e:
+            self.logger.warning("Posture not available: " + str(e))
+        try:
+            ALProxy("ALBasicAwareness").startAwareness()
+        except Exception as e:
+            self.logger.warning("Basic awareness not available: " + str(e))
+        try:
+            ALProxy("ALLeds").fadeRGB("FaceLeds", 0xFFFFFF, 0.3)
+        except Exception as e:
+            self.logger.warning("LEDs not available: " + str(e))
+        self.onStopped()
+
+    def onInput_onStop(self):
+        self.onUnload()
+        self.onStopped()]]></content></script><Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="" id="1" /><Input name="onStart" type="1" type_size="1" nature="2" inner="0" tooltip="" id="2" /><Input name="onStop" type="1" type_size="1" nature="3" inner="0" tooltip="" id="3" /><Output name="onStopped" type="1" type_size="1" nature="1" inner="0" tooltip="" id="4" /></Box><Box name="Show Web View (welcome)" id="2" localization="8" tooltip="UC01 - shows html/pages/&lt;Page&gt;?&lt;Query&gt; on the tablet." x="40" y="220"><bitmap>media/images/box/internet/internet.png</bitmap><script language="4"><content><![CDATA[import time
+try:
+    from urllib import quote          # NAOqi (Python 2.7)
+except ImportError:
+    from urllib.parse import quote    # Python 3
+
+class MyClass(GeneratedClass):
+    """UC01 - Show a page of html/pages/ on the tablet.
+    Parameters: "Page" (e.g. rating.html) and "Query" (e.g. outcome=none&kicker=Team photo).
+    Values in Query may contain spaces: they are URL-encoded here."""
+
+    def __init__(self):
+        GeneratedClass.__init__(self)
+
+    def onLoad(self):
+        pass
+
+    def onUnload(self):
+        pass
+
+    def _getTabletService(self):
+        try:
+            return self.session().service("ALTabletService")
+        except Exception as e:
+            self.logger.warning("ALTabletService not found: " + str(e))
+            return None
+
+    def _encodeQuery(self, query):
+        parts = []
+        for pair in query.split("&"):
+            if not pair:
+                continue
+            if "=" in pair:
+                k, v = pair.split("=", 1)
+                parts.append(k + "=" + quote(v, safe=""))
+            else:
+                parts.append(pair)
+        parts.append("t=%d" % int(time.time()))   # cache buster
+        return "&".join(parts)
+
+    def onInput_onStart(self):
+        tabletService = self._getTabletService()
+        appName = self.packageUid()
+        if tabletService and appName:
+            robotIP = "198.18.0.1"
+            url = "http://{ip}/apps/{app}/pages/{page}?{query}".format(
+                ip=robotIP, app=appName, page=self.getParameter("Page"),
+                query=self._encodeQuery(self.getParameter("Query")))
+            try:
+                tabletService.cleanWebview()   # clear the old page and its cache
+            except Exception as e:
+                self.logger.warning(str(e))
+            self.logger.info("Opening tablet URL: " + url)
+            try:
+                tabletService.showWebview(url)
+            except Exception as e:
+                self.logger.error("Tablet error: " + str(e))
+        self.onStopped()]]></content></script><Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="" id="1" /><Input name="onStart" type="1" type_size="1" nature="2" inner="0" tooltip="" id="2" /><Output name="onStopped" type="1" type_size="1" nature="1" inner="0" tooltip="" id="3" /><Parameter name="Page" inherits_from_parent="0" content_type="3" value="welcome.html" default_value="welcome.html" custom_choice="0" tooltip="Page inside html/pages/" id="4" /><Parameter name="Query" inherits_from_parent="0" content_type="3" value="" default_value="" custom_choice="0" tooltip="URL parameters, e.g. pageHeading=Hello&amp;pageText=How are you" id="5" /></Box><Box name="Wait For Customer (step 1)" id="3" localization="8" tooltip="UC01 - waits for a customer nearby (people perception, tablet tap, or simulated)." x="240" y="60"><bitmap>media/images/box/box-python-script.png</bitmap><script language="4"><content><![CDATA[import time
+
+class MyClass(GeneratedClass):
+    """UC01 trigger / step 1: wait until a customer is standing nearby (PRECOND-2).
+
+    Real robot: ALPeoplePerception / engagement zone events
+        EngagementZones/PersonEnteredZone1, EngagementZones/PersonEnteredZone2,
+        EngagementZones/PersonApproached
+    Tablet: "Tap to start" on welcome.html raises customerTapped (fallback).
+    Virtual robot (no people perception or no tablet): detection is simulated after 3 s, or after
+    "Simulate detection after (s)" when that parameter is > 0.
+
+    Then counts the people in zones 1 and 2:
+        1 person   -> single()
+        2 or more  -> group(count)    (extension 3a)
+    ALMemory: UC01/GroupSize. Raises customerDetected for the tablet page."""
+
+    def __init__(self):
+        GeneratedClass.__init__(self)
+
+    def onLoad(self):
+        self.detected = None
+        self.waiting = False
+        self.links = []
+
+    def onUnload(self):
+        self.waiting = False
+        self._disconnect()
+
+    def _service(self, name):
+        try:
+            return self.session().service(name)
+        except Exception as e:
+            self.logger.warning("%s not available: %s" % (name, str(e)))
+            return None
+
+    def _disconnect(self):
+        for (sub, link) in self.links:
+            try:
+                sub.signal.disconnect(link)
+            except Exception:
+                pass
+        self.links = []
+
+    def _callback(self, source):
+        def cb(value):
+            if self.detected is None:
+                self.detected = source
+        return cb
+
+    def _countPeople(self, memory):
+        n = 0
+        for key in ("EngagementZones/PeopleInZone1", "EngagementZones/PeopleInZone2"):
+            try:
+                n += len(memory.getData(key) or [])
+            except Exception:
+                pass
+        if n == 0:
+            try:
+                n = len(memory.getData("PeoplePerception/VisiblePeopleList") or [])
+            except Exception:
+                pass
+        return max(n, 1)
+
+    def onInput_onStart(self):
+        memory = self._service("ALMemory")
+        perception = self._service("ALPeoplePerception")
+        self.detected = None
+
+        events = (("EngagementZones/PersonEnteredZone1", "zone1"),
+                  ("EngagementZones/PersonEnteredZone2", "zone2"),
+                  ("EngagementZones/PersonApproached", "approached"),
+                  ("customerTapped", "tablet"))
+        if memory:
+            for (event, source) in events:
+                try:
+                    sub = memory.subscriber(event)
+                    self.links.append((sub, sub.signal.connect(self._callback(source))))
+                except Exception as e:
+                    self.logger.warning("Cannot subscribe to %s: %s" % (event, str(e)))
+
+        simAfter = int(self.getParameter("Simulate detection after (s)"))
+        tablet = self._service("ALTabletService")
+        if simAfter <= 0 and (perception is None or tablet is None):
+            simAfter = 3          # virtual robot (no camera / no tablet): simulate
+        start = time.time()
+
+        self.waiting = True
+        while self.waiting and self.detected is None:
+            if simAfter > 0 and time.time() - start >= simAfter:
+                self.detected = "simulated"
+            time.sleep(0.1)
+        self.waiting = False
+        self._disconnect()
+        if self.detected is None:      # box stopped
+            return
+
+        if self.detected == "simulated":
+            count = max(1, int(self.getParameter("Simulated people count")))
+        else:
+            time.sleep(0.8)            # let the rest of the group come into view
+            count = self._countPeople(memory) if memory else 1
+        self.logger.info("Customer detected (%s), people: %d" % (self.detected, count))
+
+        if memory:
+            try:
+                memory.insertData("UC01/GroupSize", count)
+                memory.raiseEvent("customerDetected", count)
+            except Exception:
+                pass
+        if count >= 2:
+            self.group(count)
+        else:
+            self.single()
+
+    def onInput_onStop(self):
+        self.waiting = False]]></content></script><Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="" id="1" /><Input name="onStart" type="1" type_size="1" nature="2" inner="0" tooltip="" id="2" /><Input name="onStop" type="1" type_size="1" nature="3" inner="0" tooltip="" id="3" /><Output name="single" type="1" type_size="1" nature="2" inner="0" tooltip="" id="4" /><Output name="group" type="2" type_size="1" nature="2" inner="0" tooltip="" id="5" /><Parameter name="Simulate detection after (s)" inherits_from_parent="0" content_type="1" value="0" default_value="0" min="0" max="120" tooltip="0 = real detection only (on the virtual robot it is simulated after 3 s anyway)." id="6" /><Parameter name="Simulated people count" inherits_from_parent="0" content_type="1" value="1" default_value="1" min="1" max="8" tooltip="People count used when detection is simulated. 2 or more tests extension 3a (group)." id="7" /></Box><Box name="Welcome (step 2)" id="4" localization="8" tooltip="Say some text with animations. The text can be localized." x="460" y="0"><bitmap>media/images/box/interaction/say.png</bitmap><script language="4"><content><![CDATA[import time
+
+class MyClass(GeneratedClass):
+    def __init__(self):
+        GeneratedClass.__init__(self, False)
+        self.tts = ALProxy('ALAnimatedSpeech')
+        self.ttsStop = ALProxy('ALAnimatedSpeech', True) #Create another proxy as wait is blocking if audioout is remote
+
+    def onLoad(self):
+        self.bIsRunning = False
+        self.ids = []
+
+    def onUnload(self):
+        for id in self.ids:
+            try:
+                self.ttsStop.stop(id)
+            except:
+                pass
+        while( self.bIsRunning ):
+            time.sleep( 0.2 )
+
+    def onInput_onStart(self):
+        self.bIsRunning = True
+        try:
+            movement = self.getParameter("Speaking movement mode")
+            textParam = self.getParameter("Text")
+            if movement == "disabled":
+                textParam = "^start({0}) {1} ^wait({0})".format(self.getParameter("Animation"), textParam)
+            sentence = "\RSPD="+ str( self.getParameter("Speed (%)") ) + "\ "
+            sentence += "\VCT="+ str( self.getParameter("Voice shaping (%)") ) + "\ "
+            sentence += textParam
+            sentence +=  "\RST\ "
+            id = self.tts.post.say(str(sentence), {"speakingMovementMode":movement})
+            self.ids.append(id)
+            self.tts.wait(id, 0)
+        finally:
+            try:
+                self.ids.remove(id)
+            except:
+                pass
+            if( self.ids == [] ):
+                self.onStopped() # activate output of the box
+                self.bIsRunning = False
+
+    def onInput_onStop(self):
+        self.onUnload()]]></content></script><Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="" id="1" /><Input name="onStart" type="1" type_size="1" nature="2" inner="0" tooltip="" id="2" /><Input name="onStop" type="1" type_size="1" nature="3" inner="0" tooltip="" id="3" /><Output name="onStopped" type="1" type_size="1" nature="1" inner="0" tooltip="" id="4" /><Parameter name="Voice shaping (%)" inherits_from_parent="1" content_type="1" value="100" default_value="100" min="50" max="150" tooltip="Changes the voice tone." id="5" /><Parameter name="Speed (%)" inherits_from_parent="1" content_type="1" value="95" default_value="100" min="50" max="200" tooltip="Changes the speed of the voice." id="6" /><Parameter name="Text" inherits_from_parent="0" content_type="5" value="^start(animations/Stand/Gestures/Hey_1) Hello, and welcome to Zero Latency V R! ^wait(animations/Stand/Gestures/Hey_1) \pau=200\ I'm Pepper, your host for today." default_value="" tooltip="The text you want to say. Don&apos;t forget to translate it!" id="7" /><Parameter name="Speaking movement mode" inherits_from_parent="0" content_type="3" value="contextual" default_value="contextual" custom_choice="0" tooltip="Body language during the speech." id="8"><Choice value="disabled" /><Choice value="random" /><Choice value="contextual" /></Parameter><Parameter name="Animation" inherits_from_parent="0" content_type="3" value="animations/Stand/Gestures/Hey_1" default_value="" custom_choice="1" tooltip="Animation played when Speaking movement mode is disabled." id="9" /></Box><Box name="Welcome Group (3a)" id="5" localization="8" tooltip="Say some text with animations. The text can be localized." x="460" y="160"><bitmap>media/images/box/interaction/say.png</bitmap><script language="4"><content><![CDATA[import time
+
+class MyClass(GeneratedClass):
+    def __init__(self):
+        GeneratedClass.__init__(self, False)
+        self.tts = ALProxy('ALAnimatedSpeech')
+        self.ttsStop = ALProxy('ALAnimatedSpeech', True) #Create another proxy as wait is blocking if audioout is remote
+
+    def onLoad(self):
+        self.bIsRunning = False
+        self.ids = []
+
+    def onUnload(self):
+        for id in self.ids:
+            try:
+                self.ttsStop.stop(id)
+            except:
+                pass
+        while( self.bIsRunning ):
+            time.sleep( 0.2 )
+
+    def onInput_onStart(self):
+        self.bIsRunning = True
+        try:
+            movement = self.getParameter("Speaking movement mode")
+            textParam = self.getParameter("Text")
+            if movement == "disabled":
+                textParam = "^start({0}) {1} ^wait({0})".format(self.getParameter("Animation"), textParam)
+            sentence = "\RSPD="+ str( self.getParameter("Speed (%)") ) + "\ "
+            sentence += "\VCT="+ str( self.getParameter("Voice shaping (%)") ) + "\ "
+            sentence += textParam
+            sentence +=  "\RST\ "
+            id = self.tts.post.say(str(sentence), {"speakingMovementMode":movement})
+            self.ids.append(id)
+            self.tts.wait(id, 0)
+        finally:
+            try:
+                self.ids.remove(id)
+            except:
+                pass
+            if( self.ids == [] ):
+                self.onStopped() # activate output of the box
+                self.bIsRunning = False
+
+    def onInput_onStop(self):
+        self.onUnload()]]></content></script><Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="" id="1" /><Input name="onStart" type="1" type_size="1" nature="2" inner="0" tooltip="" id="2" /><Input name="onStop" type="1" type_size="1" nature="3" inner="0" tooltip="" id="3" /><Output name="onStopped" type="1" type_size="1" nature="1" inner="0" tooltip="" id="4" /><Parameter name="Voice shaping (%)" inherits_from_parent="1" content_type="1" value="100" default_value="100" min="50" max="150" tooltip="Changes the voice tone." id="5" /><Parameter name="Speed (%)" inherits_from_parent="1" content_type="1" value="95" default_value="100" min="50" max="200" tooltip="Changes the speed of the voice." id="6" /><Parameter name="Text" inherits_from_parent="0" content_type="5" value="^start(animations/Stand/Gestures/Hey_1) Hello everyone, and welcome to Zero Latency V R! ^wait(animations/Stand/Gestures/Hey_1) \pau=200\ I'm Pepper, your host for today." default_value="" tooltip="The text you want to say. Don&apos;t forget to translate it!" id="7" /><Parameter name="Speaking movement mode" inherits_from_parent="0" content_type="3" value="contextual" default_value="contextual" custom_choice="0" tooltip="Body language during the speech." id="8"><Choice value="disabled" /><Choice value="random" /><Choice value="contextual" /></Parameter><Parameter name="Animation" inherits_from_parent="0" content_type="3" value="animations/Stand/Gestures/Hey_1" default_value="" custom_choice="1" tooltip="Animation played when Speaking movement mode is disabled." id="9" /></Box><Box name="Ask First Time (step 3)" id="6" localization="8" tooltip="Say some text with animations. The text can be localized." x="680" y="0"><bitmap>media/images/box/interaction/say.png</bitmap><script language="4"><content><![CDATA[import time
+
+class MyClass(GeneratedClass):
+    def __init__(self):
+        GeneratedClass.__init__(self, False)
+        self.tts = ALProxy('ALAnimatedSpeech')
+        self.ttsStop = ALProxy('ALAnimatedSpeech', True) #Create another proxy as wait is blocking if audioout is remote
+
+    def onLoad(self):
+        self.bIsRunning = False
+        self.ids = []
+
+    def onUnload(self):
+        for id in self.ids:
+            try:
+                self.ttsStop.stop(id)
+            except:
+                pass
+        while( self.bIsRunning ):
+            time.sleep( 0.2 )
+
+    def onInput_onStart(self):
+        self.bIsRunning = True
+        try:
+            movement = self.getParameter("Speaking movement mode")
+            textParam = self.getParameter("Text")
+            if movement == "disabled":
+                textParam = "^start({0}) {1} ^wait({0})".format(self.getParameter("Animation"), textParam)
+            sentence = "\RSPD="+ str( self.getParameter("Speed (%)") ) + "\ "
+            sentence += "\VCT="+ str( self.getParameter("Voice shaping (%)") ) + "\ "
+            sentence += textParam
+            sentence +=  "\RST\ "
+            id = self.tts.post.say(str(sentence), {"speakingMovementMode":movement})
+            self.ids.append(id)
+            self.tts.wait(id, 0)
+        finally:
+            try:
+                self.ids.remove(id)
+            except:
+                pass
+            if( self.ids == [] ):
+                self.onStopped() # activate output of the box
+                self.bIsRunning = False
+
+    def onInput_onStop(self):
+        self.onUnload()]]></content></script><Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="" id="1" /><Input name="onStart" type="1" type_size="1" nature="2" inner="0" tooltip="" id="2" /><Input name="onStop" type="1" type_size="1" nature="3" inner="0" tooltip="" id="3" /><Output name="onStopped" type="1" type_size="1" nature="1" inner="0" tooltip="" id="4" /><Parameter name="Voice shaping (%)" inherits_from_parent="1" content_type="1" value="100" default_value="100" min="50" max="150" tooltip="Changes the voice tone." id="5" /><Parameter name="Speed (%)" inherits_from_parent="1" content_type="1" value="95" default_value="100" min="50" max="200" tooltip="Changes the speed of the voice." id="6" /><Parameter name="Text" inherits_from_parent="0" content_type="5" value="Is this your first time at our venue? \pau=200\ Say yes or no, or tap your answer on my tablet." default_value="" tooltip="The text you want to say. Don&apos;t forget to translate it!" id="7" /><Parameter name="Speaking movement mode" inherits_from_parent="0" content_type="3" value="contextual" default_value="contextual" custom_choice="0" tooltip="Body language during the speech." id="8"><Choice value="disabled" /><Choice value="random" /><Choice value="contextual" /></Parameter><Parameter name="Animation" inherits_from_parent="0" content_type="3" value="animations/Stand/Gestures/Hey_1" default_value="" custom_choice="1" tooltip="Animation played when Speaking movement mode is disabled." id="9" /></Box><Box name="Ask Group (3a1)" id="7" localization="8" tooltip="Say some text with animations. The text can be localized." x="680" y="160"><bitmap>media/images/box/interaction/say.png</bitmap><script language="4"><content><![CDATA[import time
+
+class MyClass(GeneratedClass):
+    def __init__(self):
+        GeneratedClass.__init__(self, False)
+        self.tts = ALProxy('ALAnimatedSpeech')
+        self.ttsStop = ALProxy('ALAnimatedSpeech', True) #Create another proxy as wait is blocking if audioout is remote
+
+    def onLoad(self):
+        self.bIsRunning = False
+        self.ids = []
+
+    def onUnload(self):
+        for id in self.ids:
+            try:
+                self.ttsStop.stop(id)
+            except:
+                pass
+        while( self.bIsRunning ):
+            time.sleep( 0.2 )
+
+    def onInput_onStart(self):
+        self.bIsRunning = True
+        try:
+            movement = self.getParameter("Speaking movement mode")
+            textParam = self.getParameter("Text")
+            if movement == "disabled":
+                textParam = "^start({0}) {1} ^wait({0})".format(self.getParameter("Animation"), textParam)
+            sentence = "\RSPD="+ str( self.getParameter("Speed (%)") ) + "\ "
+            sentence += "\VCT="+ str( self.getParameter("Voice shaping (%)") ) + "\ "
+            sentence += textParam
+            sentence +=  "\RST\ "
+            id = self.tts.post.say(str(sentence), {"speakingMovementMode":movement})
+            self.ids.append(id)
+            self.tts.wait(id, 0)
+        finally:
+            try:
+                self.ids.remove(id)
+            except:
+                pass
+            if( self.ids == [] ):
+                self.onStopped() # activate output of the box
+                self.bIsRunning = False
+
+    def onInput_onStop(self):
+        self.onUnload()]]></content></script><Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="" id="1" /><Input name="onStart" type="1" type_size="1" nature="2" inner="0" tooltip="" id="2" /><Input name="onStop" type="1" type_size="1" nature="3" inner="0" tooltip="" id="3" /><Output name="onStopped" type="1" type_size="1" nature="1" inner="0" tooltip="" id="4" /><Parameter name="Voice shaping (%)" inherits_from_parent="1" content_type="1" value="100" default_value="100" min="50" max="150" tooltip="Changes the voice tone." id="5" /><Parameter name="Speed (%)" inherits_from_parent="1" content_type="1" value="95" default_value="100" min="50" max="200" tooltip="Changes the speed of the voice." id="6" /><Parameter name="Text" inherits_from_parent="0" content_type="5" value="Is anyone in your group new to free roam V R? \pau=200\ Say yes, no, or some of us. You can also tap my tablet." default_value="" tooltip="The text you want to say. Don&apos;t forget to translate it!" id="7" /><Parameter name="Speaking movement mode" inherits_from_parent="0" content_type="3" value="contextual" default_value="contextual" custom_choice="0" tooltip="Body language during the speech." id="8"><Choice value="disabled" /><Choice value="random" /><Choice value="contextual" /></Parameter><Parameter name="Animation" inherits_from_parent="0" content_type="3" value="animations/Stand/Gestures/Hey_1" default_value="" custom_choice="1" tooltip="Animation played when Speaking movement mode is disabled." id="9" /></Box><Box name="Show Web View (question)" id="8" localization="8" tooltip="UC01 - shows html/pages/&lt;Page&gt;?&lt;Query&gt; on the tablet." x="900" y="220"><bitmap>media/images/box/internet/internet.png</bitmap><script language="4"><content><![CDATA[import time
+try:
+    from urllib import quote          # NAOqi (Python 2.7)
+except ImportError:
+    from urllib.parse import quote    # Python 3
+
+class MyClass(GeneratedClass):
+    """UC01 - Show a page of html/pages/ on the tablet.
+    Parameters: "Page" (e.g. rating.html) and "Query" (e.g. outcome=none&kicker=Team photo).
+    Values in Query may contain spaces: they are URL-encoded here."""
+
+    def __init__(self):
+        GeneratedClass.__init__(self)
+
+    def onLoad(self):
+        pass
+
+    def onUnload(self):
+        pass
+
+    def _getTabletService(self):
+        try:
+            return self.session().service("ALTabletService")
+        except Exception as e:
+            self.logger.warning("ALTabletService not found: " + str(e))
+            return None
+
+    def _encodeQuery(self, query):
+        parts = []
+        for pair in query.split("&"):
+            if not pair:
+                continue
+            if "=" in pair:
+                k, v = pair.split("=", 1)
+                parts.append(k + "=" + quote(v, safe=""))
+            else:
+                parts.append(pair)
+        parts.append("t=%d" % int(time.time()))   # cache buster
+        return "&".join(parts)
+
+    def onInput_onStart(self):
+        tabletService = self._getTabletService()
+        appName = self.packageUid()
+        if tabletService and appName:
+            robotIP = "198.18.0.1"
+            url = "http://{ip}/apps/{app}/pages/{page}?{query}".format(
+                ip=robotIP, app=appName, page=self.getParameter("Page"),
+                query=self._encodeQuery(self.getParameter("Query")))
+            try:
+                tabletService.cleanWebview()   # clear the old page and its cache
+            except Exception as e:
+                self.logger.warning(str(e))
+            self.logger.info("Opening tablet URL: " + url)
+            try:
+                tabletService.showWebview(url)
+            except Exception as e:
+                self.logger.error("Tablet error: " + str(e))
+        self.onStopped()]]></content></script><Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="" id="1" /><Input name="onStart" type="1" type_size="1" nature="2" inner="0" tooltip="" id="2" /><Output name="onStopped" type="1" type_size="1" nature="1" inner="0" tooltip="" id="3" /><Parameter name="Page" inherits_from_parent="0" content_type="3" value="visitor.html" default_value="visitor.html" custom_choice="0" tooltip="Page inside html/pages/" id="4" /><Parameter name="Query" inherits_from_parent="0" content_type="3" value="" default_value="" custom_choice="0" tooltip="URL parameters, e.g. pageHeading=Hello&amp;pageText=How are you" id="5" /></Box><Box name="visitor_d" id="9" localization="8" tooltip="" x="900" y="40"><dialogFile>../visitor_d/visitor_d.dlg</dialogFile><bitmap>media/images/box/box-dialog.png</bitmap><script language="4"><content><![CDATA[]]></content></script><Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="" id="1" /><Input name="onStart" type="1" type_size="1" nature="2" inner="0" tooltip="" id="2" /><Input name="onStop" type="1" type_size="1" nature="3" inner="0" tooltip="" id="3" /><Output name="onStopped" type="1" type_size="1" nature="1" inner="0" tooltip="" id="4" /><Output name="visitorStatus" type="3" type_size="1" nature="2" inner="0" tooltip="" id="5" /><Output name="showButtons" type="1" type_size="1" nature="2" inner="0" tooltip="" id="6" /><Resource name="Speech" type="Lock" timeout="0" /><Resource name="Speech recognition" type="Lock" timeout="0" /></Box><Box name="Show Web View (tap your answer, 4a)" id="10" localization="8" tooltip="UC01 - shows html/pages/&lt;Page&gt;?&lt;Query&gt; on the tablet." x="1120" y="260"><bitmap>media/images/box/internet/internet.png</bitmap><script language="4"><content><![CDATA[import time
+try:
+    from urllib import quote          # NAOqi (Python 2.7)
+except ImportError:
+    from urllib.parse import quote    # Python 3
+
+class MyClass(GeneratedClass):
+    """UC01 - Show a page of html/pages/ on the tablet.
+    Parameters: "Page" (e.g. rating.html) and "Query" (e.g. outcome=none&kicker=Team photo).
+    Values in Query may contain spaces: they are URL-encoded here."""
+
+    def __init__(self):
+        GeneratedClass.__init__(self)
+
+    def onLoad(self):
+        pass
+
+    def onUnload(self):
+        pass
+
+    def _getTabletService(self):
+        try:
+            return self.session().service("ALTabletService")
+        except Exception as e:
+            self.logger.warning("ALTabletService not found: " + str(e))
+            return None
+
+    def _encodeQuery(self, query):
+        parts = []
+        for pair in query.split("&"):
+            if not pair:
+                continue
+            if "=" in pair:
+                k, v = pair.split("=", 1)
+                parts.append(k + "=" + quote(v, safe=""))
+            else:
+                parts.append(pair)
+        parts.append("t=%d" % int(time.time()))   # cache buster
+        return "&".join(parts)
+
+    def onInput_onStart(self):
+        tabletService = self._getTabletService()
+        appName = self.packageUid()
+        if tabletService and appName:
+            robotIP = "198.18.0.1"
+            url = "http://{ip}/apps/{app}/pages/{page}?{query}".format(
+                ip=robotIP, app=appName, page=self.getParameter("Page"),
+                query=self._encodeQuery(self.getParameter("Query")))
+            try:
+                tabletService.cleanWebview()   # clear the old page and its cache
+            except Exception as e:
+                self.logger.warning(str(e))
+            self.logger.info("Opening tablet URL: " + url)
+            try:
+                tabletService.showWebview(url)
+            except Exception as e:
+                self.logger.error("Tablet error: " + str(e))
+        self.onStopped()]]></content></script><Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="" id="1" /><Input name="onStart" type="1" type_size="1" nature="2" inner="0" tooltip="" id="2" /><Output name="onStopped" type="1" type_size="1" nature="1" inner="0" tooltip="" id="3" /><Parameter name="Page" inherits_from_parent="0" content_type="3" value="visitor.html" default_value="visitor.html" custom_choice="0" tooltip="Page inside html/pages/" id="4" /><Parameter name="Query" inherits_from_parent="0" content_type="3" value="hint=1" default_value="hint=1" custom_choice="0" tooltip="URL parameters, e.g. pageHeading=Hello&amp;pageText=How are you" id="5" /></Box><Box name="Save Visitor Status" id="11" localization="8" tooltip="UC01 - stores UC01/VisitorStatus and routes to 5a / 5b." x="1120" y="40"><bitmap>media/images/box/box-python-script.png</bitmap><script language="4"><content><![CDATA[import time
+
+class MyClass(GeneratedClass):
+    """UC01 POSTCOND-1: store the visitor status and route the flow (step 5).
+    Input (string): new | returning | mixed     (mixed = group with conflicting answers)
+    ALMemory: UC01/VisitorStatus, UC01/LastVisitTime (read later by UC-02 Check In)."""
+
+    def __init__(self):
+        GeneratedClass.__init__(self)
+
+    def onLoad(self):
+        pass
+
+    def onUnload(self):
+        pass
+
+    def onInput_onStart(self, status):
+        status = str(status).strip().lower()
+        if status not in ("new", "returning", "mixed"):
+            status = "new"            # safest default: the longer introduction
+        try:
+            memory = self.session().service("ALMemory")
+            memory.insertData("UC01/VisitorStatus", status)
+            memory.insertData("UC01/LastVisitTime", time.strftime("%Y-%m-%d %H:%M:%S"))
+        except Exception as e:
+            self.logger.warning("ALMemory: " + str(e))
+        self.logger.info("Visitor status: " + status)
+        if status == "returning":
+            self.returningVisitor()
+        elif status == "mixed":
+            self.mixedGroup()
+        else:
+            self.newVisitor()]]></content></script><Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="" id="1" /><Input name="onStart" type="3" type_size="1" nature="2" inner="0" tooltip="" id="2" /><Output name="newVisitor" type="1" type_size="1" nature="2" inner="0" tooltip="" id="3" /><Output name="returningVisitor" type="1" type_size="1" nature="2" inner="0" tooltip="" id="4" /><Output name="mixedGroup" type="1" type_size="1" nature="2" inner="0" tooltip="" id="5" /></Box><Box name="Mixed Group Welcome (open issue)" id="12" localization="8" tooltip="Say some text with animations. The text can be localized." x="1340" y="160"><bitmap>media/images/box/interaction/say.png</bitmap><script language="4"><content><![CDATA[import time
+
+class MyClass(GeneratedClass):
+    def __init__(self):
+        GeneratedClass.__init__(self, False)
+        self.tts = ALProxy('ALAnimatedSpeech')
+        self.ttsStop = ALProxy('ALAnimatedSpeech', True) #Create another proxy as wait is blocking if audioout is remote
+
+    def onLoad(self):
+        self.bIsRunning = False
+        self.ids = []
+
+    def onUnload(self):
+        for id in self.ids:
+            try:
+                self.ttsStop.stop(id)
+            except:
+                pass
+        while( self.bIsRunning ):
+            time.sleep( 0.2 )
+
+    def onInput_onStart(self):
+        self.bIsRunning = True
+        try:
+            movement = self.getParameter("Speaking movement mode")
+            textParam = self.getParameter("Text")
+            if movement == "disabled":
+                textParam = "^start({0}) {1} ^wait({0})".format(self.getParameter("Animation"), textParam)
+            sentence = "\RSPD="+ str( self.getParameter("Speed (%)") ) + "\ "
+            sentence += "\VCT="+ str( self.getParameter("Voice shaping (%)") ) + "\ "
+            sentence += textParam
+            sentence +=  "\RST\ "
+            id = self.tts.post.say(str(sentence), {"speakingMovementMode":movement})
+            self.ids.append(id)
+            self.tts.wait(id, 0)
+        finally:
+            try:
+                self.ids.remove(id)
+            except:
+                pass
+            if( self.ids == [] ):
+                self.onStopped() # activate output of the box
+                self.bIsRunning = False
+
+    def onInput_onStop(self):
+        self.onUnload()]]></content></script><Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="" id="1" /><Input name="onStart" type="1" type_size="1" nature="2" inner="0" tooltip="" id="2" /><Input name="onStop" type="1" type_size="1" nature="3" inner="0" tooltip="" id="3" /><Output name="onStopped" type="1" type_size="1" nature="1" inner="0" tooltip="" id="4" /><Parameter name="Voice shaping (%)" inherits_from_parent="1" content_type="1" value="100" default_value="100" min="50" max="150" tooltip="Changes the voice tone." id="5" /><Parameter name="Speed (%)" inherits_from_parent="1" content_type="1" value="95" default_value="100" min="50" max="200" tooltip="Changes the speed of the voice." id="6" /><Parameter name="Text" inherits_from_parent="0" content_type="5" value="Welcome back to those of you who have been here before, \pau=200\ and a big welcome to our first timers! \pau=300\ Let me quickly explain how it works, so everyone is ready." default_value="" tooltip="The text you want to say. Don&apos;t forget to translate it!" id="7" /><Parameter name="Speaking movement mode" inherits_from_parent="0" content_type="3" value="contextual" default_value="contextual" custom_choice="0" tooltip="Body language during the speech." id="8"><Choice value="disabled" /><Choice value="random" /><Choice value="contextual" /></Parameter><Parameter name="Animation" inherits_from_parent="0" content_type="3" value="animations/Stand/Gestures/Hey_1" default_value="" custom_choice="1" tooltip="Animation played when Speaking movement mode is disabled." id="9" /></Box><Box name="New Customer Intro (5a)" id="13" localization="8" tooltip="Say some text with animations. The text can be localized." x="1560" y="0"><bitmap>media/images/box/interaction/say.png</bitmap><script language="4"><content><![CDATA[import time
+
+class MyClass(GeneratedClass):
+    def __init__(self):
+        GeneratedClass.__init__(self, False)
+        self.tts = ALProxy('ALAnimatedSpeech')
+        self.ttsStop = ALProxy('ALAnimatedSpeech', True) #Create another proxy as wait is blocking if audioout is remote
+
+    def onLoad(self):
+        self.bIsRunning = False
+        self.ids = []
+
+    def onUnload(self):
+        for id in self.ids:
+            try:
+                self.ttsStop.stop(id)
+            except:
+                pass
+        while( self.bIsRunning ):
+            time.sleep( 0.2 )
+
+    def onInput_onStart(self):
+        self.bIsRunning = True
+        try:
+            movement = self.getParameter("Speaking movement mode")
+            textParam = self.getParameter("Text")
+            if movement == "disabled":
+                textParam = "^start({0}) {1} ^wait({0})".format(self.getParameter("Animation"), textParam)
+            sentence = "\RSPD="+ str( self.getParameter("Speed (%)") ) + "\ "
+            sentence += "\VCT="+ str( self.getParameter("Voice shaping (%)") ) + "\ "
+            sentence += textParam
+            sentence +=  "\RST\ "
+            id = self.tts.post.say(str(sentence), {"speakingMovementMode":movement})
+            self.ids.append(id)
+            self.tts.wait(id, 0)
+        finally:
+            try:
+                self.ids.remove(id)
+            except:
+                pass
+            if( self.ids == [] ):
+                self.onStopped() # activate output of the box
+                self.bIsRunning = False
+
+    def onInput_onStop(self):
+        self.onUnload()]]></content></script><Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="" id="1" /><Input name="onStart" type="1" type_size="1" nature="2" inner="0" tooltip="" id="2" /><Input name="onStop" type="1" type_size="1" nature="3" inner="0" tooltip="" id="3" /><Output name="onStopped" type="1" type_size="1" nature="1" inner="0" tooltip="" id="4" /><Parameter name="Voice shaping (%)" inherits_from_parent="1" content_type="1" value="100" default_value="100" min="50" max="150" tooltip="Changes the voice tone." id="5" /><Parameter name="Speed (%)" inherits_from_parent="1" content_type="1" value="95" default_value="100" min="50" max="200" tooltip="Changes the speed of the voice." id="6" /><Parameter name="Text" inherits_from_parent="0" content_type="5" value="Then you are in for something special! \pau=400\ Here, you play free roam virtual reality. \pau=300\ That means no cables and no standing still: you walk freely around a huge arena, with a headset and a light backpack. \pau=400\ You can team up with up to eight friends, and you see each other inside the game. \pau=400\ Our staff will fit your gear and keep you safe the whole time. \pau=400\ Now, let's get you checked in!" default_value="" tooltip="The text you want to say. Don&apos;t forget to translate it!" id="7" /><Parameter name="Speaking movement mode" inherits_from_parent="0" content_type="3" value="contextual" default_value="contextual" custom_choice="0" tooltip="Body language during the speech." id="8"><Choice value="disabled" /><Choice value="random" /><Choice value="contextual" /></Parameter><Parameter name="Animation" inherits_from_parent="0" content_type="3" value="animations/Stand/Gestures/Hey_1" default_value="" custom_choice="1" tooltip="Animation played when Speaking movement mode is disabled." id="9" /></Box><Box name="Show Web View (new intro)" id="14" localization="8" tooltip="UC01 - shows html/pages/&lt;Page&gt;?&lt;Query&gt; on the tablet." x="1560" y="220"><bitmap>media/images/box/internet/internet.png</bitmap><script language="4"><content><![CDATA[import time
+try:
+    from urllib import quote          # NAOqi (Python 2.7)
+except ImportError:
+    from urllib.parse import quote    # Python 3
+
+class MyClass(GeneratedClass):
+    """UC01 - Show a page of html/pages/ on the tablet.
+    Parameters: "Page" (e.g. rating.html) and "Query" (e.g. outcome=none&kicker=Team photo).
+    Values in Query may contain spaces: they are URL-encoded here."""
+
+    def __init__(self):
+        GeneratedClass.__init__(self)
+
+    def onLoad(self):
+        pass
+
+    def onUnload(self):
+        pass
+
+    def _getTabletService(self):
+        try:
+            return self.session().service("ALTabletService")
+        except Exception as e:
+            self.logger.warning("ALTabletService not found: " + str(e))
+            return None
+
+    def _encodeQuery(self, query):
+        parts = []
+        for pair in query.split("&"):
+            if not pair:
+                continue
+            if "=" in pair:
+                k, v = pair.split("=", 1)
+                parts.append(k + "=" + quote(v, safe=""))
+            else:
+                parts.append(pair)
+        parts.append("t=%d" % int(time.time()))   # cache buster
+        return "&".join(parts)
+
+    def onInput_onStart(self):
+        tabletService = self._getTabletService()
+        appName = self.packageUid()
+        if tabletService and appName:
+            robotIP = "198.18.0.1"
+            url = "http://{ip}/apps/{app}/pages/{page}?{query}".format(
+                ip=robotIP, app=appName, page=self.getParameter("Page"),
+                query=self._encodeQuery(self.getParameter("Query")))
+            try:
+                tabletService.cleanWebview()   # clear the old page and its cache
+            except Exception as e:
+                self.logger.warning(str(e))
+            self.logger.info("Opening tablet URL: " + url)
+            try:
+                tabletService.showWebview(url)
+            except Exception as e:
+                self.logger.error("Tablet error: " + str(e))
+        self.onStopped()]]></content></script><Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="" id="1" /><Input name="onStart" type="1" type_size="1" nature="2" inner="0" tooltip="" id="2" /><Output name="onStopped" type="1" type_size="1" nature="1" inner="0" tooltip="" id="3" /><Parameter name="Page" inherits_from_parent="0" content_type="3" value="newvisitor.html" default_value="newvisitor.html" custom_choice="0" tooltip="Page inside html/pages/" id="4" /><Parameter name="Query" inherits_from_parent="0" content_type="3" value="" default_value="" custom_choice="0" tooltip="URL parameters, e.g. pageHeading=Hello&amp;pageText=How are you" id="5" /></Box><Box name="Show Web View (mixed intro)" id="15" localization="8" tooltip="UC01 - shows html/pages/&lt;Page&gt;?&lt;Query&gt; on the tablet." x="1340" y="300"><bitmap>media/images/box/internet/internet.png</bitmap><script language="4"><content><![CDATA[import time
+try:
+    from urllib import quote          # NAOqi (Python 2.7)
+except ImportError:
+    from urllib.parse import quote    # Python 3
+
+class MyClass(GeneratedClass):
+    """UC01 - Show a page of html/pages/ on the tablet.
+    Parameters: "Page" (e.g. rating.html) and "Query" (e.g. outcome=none&kicker=Team photo).
+    Values in Query may contain spaces: they are URL-encoded here."""
+
+    def __init__(self):
+        GeneratedClass.__init__(self)
+
+    def onLoad(self):
+        pass
+
+    def onUnload(self):
+        pass
+
+    def _getTabletService(self):
+        try:
+            return self.session().service("ALTabletService")
+        except Exception as e:
+            self.logger.warning("ALTabletService not found: " + str(e))
+            return None
+
+    def _encodeQuery(self, query):
+        parts = []
+        for pair in query.split("&"):
+            if not pair:
+                continue
+            if "=" in pair:
+                k, v = pair.split("=", 1)
+                parts.append(k + "=" + quote(v, safe=""))
+            else:
+                parts.append(pair)
+        parts.append("t=%d" % int(time.time()))   # cache buster
+        return "&".join(parts)
+
+    def onInput_onStart(self):
+        tabletService = self._getTabletService()
+        appName = self.packageUid()
+        if tabletService and appName:
+            robotIP = "198.18.0.1"
+            url = "http://{ip}/apps/{app}/pages/{page}?{query}".format(
+                ip=robotIP, app=appName, page=self.getParameter("Page"),
+                query=self._encodeQuery(self.getParameter("Query")))
+            try:
+                tabletService.cleanWebview()   # clear the old page and its cache
+            except Exception as e:
+                self.logger.warning(str(e))
+            self.logger.info("Opening tablet URL: " + url)
+            try:
+                tabletService.showWebview(url)
+            except Exception as e:
+                self.logger.error("Tablet error: " + str(e))
+        self.onStopped()]]></content></script><Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="" id="1" /><Input name="onStart" type="1" type_size="1" nature="2" inner="0" tooltip="" id="2" /><Output name="onStopped" type="1" type_size="1" nature="1" inner="0" tooltip="" id="3" /><Parameter name="Page" inherits_from_parent="0" content_type="3" value="newvisitor.html" default_value="newvisitor.html" custom_choice="0" tooltip="Page inside html/pages/" id="4" /><Parameter name="Query" inherits_from_parent="0" content_type="3" value="mixed=1" default_value="mixed=1" custom_choice="0" tooltip="URL parameters, e.g. pageHeading=Hello&amp;pageText=How are you" id="5" /></Box><Box name="Welcome Back (5b)" id="16" localization="8" tooltip="Say some text with animations. The text can be localized." x="1340" y="0"><bitmap>media/images/box/interaction/say.png</bitmap><script language="4"><content><![CDATA[import time
+
+class MyClass(GeneratedClass):
+    def __init__(self):
+        GeneratedClass.__init__(self, False)
+        self.tts = ALProxy('ALAnimatedSpeech')
+        self.ttsStop = ALProxy('ALAnimatedSpeech', True) #Create another proxy as wait is blocking if audioout is remote
+
+    def onLoad(self):
+        self.bIsRunning = False
+        self.ids = []
+
+    def onUnload(self):
+        for id in self.ids:
+            try:
+                self.ttsStop.stop(id)
+            except:
+                pass
+        while( self.bIsRunning ):
+            time.sleep( 0.2 )
+
+    def onInput_onStart(self):
+        self.bIsRunning = True
+        try:
+            movement = self.getParameter("Speaking movement mode")
+            textParam = self.getParameter("Text")
+            if movement == "disabled":
+                textParam = "^start({0}) {1} ^wait({0})".format(self.getParameter("Animation"), textParam)
+            sentence = "\RSPD="+ str( self.getParameter("Speed (%)") ) + "\ "
+            sentence += "\VCT="+ str( self.getParameter("Voice shaping (%)") ) + "\ "
+            sentence += textParam
+            sentence +=  "\RST\ "
+            id = self.tts.post.say(str(sentence), {"speakingMovementMode":movement})
+            self.ids.append(id)
+            self.tts.wait(id, 0)
+        finally:
+            try:
+                self.ids.remove(id)
+            except:
+                pass
+            if( self.ids == [] ):
+                self.onStopped() # activate output of the box
+                self.bIsRunning = False
+
+    def onInput_onStop(self):
+        self.onUnload()]]></content></script><Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="" id="1" /><Input name="onStart" type="1" type_size="1" nature="2" inner="0" tooltip="" id="2" /><Input name="onStop" type="1" type_size="1" nature="3" inner="0" tooltip="" id="3" /><Output name="onStopped" type="1" type_size="1" nature="1" inner="0" tooltip="" id="4" /><Parameter name="Voice shaping (%)" inherits_from_parent="1" content_type="1" value="100" default_value="100" min="50" max="150" tooltip="Changes the voice tone." id="5" /><Parameter name="Speed (%)" inherits_from_parent="1" content_type="1" value="95" default_value="100" min="50" max="200" tooltip="Changes the speed of the voice." id="6" /><Parameter name="Text" inherits_from_parent="0" content_type="5" value="^start(animations/Stand/Gestures/Enthusiastic_4) Welcome back! ^wait(animations/Stand/Gestures/Enthusiastic_4) It's great to see you again. \pau=300\ Ready for another mission? \pau=200\ Let's get you checked in!" default_value="" tooltip="The text you want to say. Don&apos;t forget to translate it!" id="7" /><Parameter name="Speaking movement mode" inherits_from_parent="0" content_type="3" value="contextual" default_value="contextual" custom_choice="0" tooltip="Body language during the speech." id="8"><Choice value="disabled" /><Choice value="random" /><Choice value="contextual" /></Parameter><Parameter name="Animation" inherits_from_parent="0" content_type="3" value="animations/Stand/Gestures/Hey_1" default_value="" custom_choice="1" tooltip="Animation played when Speaking movement mode is disabled." id="9" /></Box><Box name="Show Web View (welcome back)" id="17" localization="8" tooltip="UC01 - shows html/pages/&lt;Page&gt;?&lt;Query&gt; on the tablet." x="1560" y="380"><bitmap>media/images/box/internet/internet.png</bitmap><script language="4"><content><![CDATA[import time
+try:
+    from urllib import quote          # NAOqi (Python 2.7)
+except ImportError:
+    from urllib.parse import quote    # Python 3
+
+class MyClass(GeneratedClass):
+    """UC01 - Show a page of html/pages/ on the tablet.
+    Parameters: "Page" (e.g. rating.html) and "Query" (e.g. outcome=none&kicker=Team photo).
+    Values in Query may contain spaces: they are URL-encoded here."""
+
+    def __init__(self):
+        GeneratedClass.__init__(self)
+
+    def onLoad(self):
+        pass
+
+    def onUnload(self):
+        pass
+
+    def _getTabletService(self):
+        try:
+            return self.session().service("ALTabletService")
+        except Exception as e:
+            self.logger.warning("ALTabletService not found: " + str(e))
+            return None
+
+    def _encodeQuery(self, query):
+        parts = []
+        for pair in query.split("&"):
+            if not pair:
+                continue
+            if "=" in pair:
+                k, v = pair.split("=", 1)
+                parts.append(k + "=" + quote(v, safe=""))
+            else:
+                parts.append(pair)
+        parts.append("t=%d" % int(time.time()))   # cache buster
+        return "&".join(parts)
+
+    def onInput_onStart(self):
+        tabletService = self._getTabletService()
+        appName = self.packageUid()
+        if tabletService and appName:
+            robotIP = "198.18.0.1"
+            url = "http://{ip}/apps/{app}/pages/{page}?{query}".format(
+                ip=robotIP, app=appName, page=self.getParameter("Page"),
+                query=self._encodeQuery(self.getParameter("Query")))
+            try:
+                tabletService.cleanWebview()   # clear the old page and its cache
+            except Exception as e:
+                self.logger.warning(str(e))
+            self.logger.info("Opening tablet URL: " + url)
+            try:
+                tabletService.showWebview(url)
+            except Exception as e:
+                self.logger.error("Tablet error: " + str(e))
+        self.onStopped()]]></content></script><Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="" id="1" /><Input name="onStart" type="1" type_size="1" nature="2" inner="0" tooltip="" id="2" /><Output name="onStopped" type="1" type_size="1" nature="1" inner="0" tooltip="" id="3" /><Parameter name="Page" inherits_from_parent="0" content_type="3" value="welcomeback.html" default_value="welcomeback.html" custom_choice="0" tooltip="Page inside html/pages/" id="4" /><Parameter name="Query" inherits_from_parent="0" content_type="3" value="" default_value="" custom_choice="0" tooltip="URL parameters, e.g. pageHeading=Hello&amp;pageText=How are you" id="5" /></Box><Link inputowner="1" indexofinput="2" outputowner="0" indexofoutput="2" /><Link inputowner="2" indexofinput="2" outputowner="1" indexofoutput="4" /><Link inputowner="3" indexofinput="2" outputowner="1" indexofoutput="4" /><Link inputowner="4" indexofinput="2" outputowner="3" indexofoutput="4" /><Link inputowner="5" indexofinput="2" outputowner="3" indexofoutput="5" /><Link inputowner="6" indexofinput="2" outputowner="4" indexofoutput="4" /><Link inputowner="7" indexofinput="2" outputowner="5" indexofoutput="4" /><Link inputowner="9" indexofinput="2" outputowner="6" indexofoutput="4" /><Link inputowner="8" indexofinput="2" outputowner="6" indexofoutput="4" /><Link inputowner="9" indexofinput="2" outputowner="7" indexofoutput="4" /><Link inputowner="8" indexofinput="2" outputowner="7" indexofoutput="4" /><Link inputowner="10" indexofinput="2" outputowner="9" indexofoutput="6" /><Link inputowner="11" indexofinput="2" outputowner="9" indexofoutput="5" /><Link inputowner="13" indexofinput="2" outputowner="11" indexofoutput="3" /><Link inputowner="14" indexofinput="2" outputowner="11" indexofoutput="3" /><Link inputowner="16" indexofinput="2" outputowner="11" indexofoutput="4" /><Link inputowner="17" indexofinput="2" outputowner="11" indexofoutput="4" /><Link inputowner="12" indexofinput="2" outputowner="11" indexofoutput="5" /><Link inputowner="15" indexofinput="2" outputowner="11" indexofoutput="5" /><Link inputowner="13" indexofinput="2" outputowner="12" indexofoutput="4" /><Link inputowner="0" indexofinput="4" outputowner="13" indexofoutput="4" /><Link inputowner="0" indexofinput="4" outputowner="16" indexofoutput="4" /></Diagram></BehaviorKeyframe></BehaviorLayer></Timeline></Box></ChoregrapheProject>
