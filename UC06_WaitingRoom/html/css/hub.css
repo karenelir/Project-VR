@@ -1,0 +1,59 @@
+* { -webkit-box-sizing: border-box; box-sizing: border-box; }
+html, body { height: 100%; margin: 0; padding: 0; }
+body {
+    background: #181b28;
+    color: #ffffff;
+    font-family: "Roboto", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    padding: 3vh 3vw;
+    overflow: hidden;
+    -webkit-user-select: none; user-select: none;
+}
+
+header { flex: 0 0 auto; margin-bottom: 3vh; display: flex; flex-direction: row; align-items: center; justify-content: space-between; }
+header img { height: 12vh; width: auto; margin-left: 2vw; flex: 0 0 auto; order: 2; }
+header .text { flex: 1 1 auto; min-width: 0; order: 1; }
+.kicker {
+    display: inline-block;
+    font-size: 1.61vw; font-weight: 700; letter-spacing: 4px; text-transform: uppercase;
+    color: #7fecff;
+    padding-bottom: 0.5vh;
+    border-bottom: 2px solid rgba(127, 236, 255, 0.55);
+    margin-bottom: 1.4vh;
+}
+h1 { margin: 0; font-size: 3.96vw; font-weight: 800; line-height: 1.1; }
+header p { margin: 0.8vh 0 0 0; font-size: 1.95vw; color: #d6daf0; }
+
+.options { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: row; justify-content: center; margin: 0 -0.9vw; }
+
+.option {
+    width: 33.33%;
+    margin: 0 0.9vw;
+    padding: 0;
+    -webkit-appearance: none;
+    font: inherit; text-align: center; cursor: pointer;
+    border-radius: 1.8vw;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    background: #242838;
+    border: 2px solid rgba(255,255,255,0.12);
+    color: #ffffff;
+    -webkit-transition: -webkit-transform .12s ease; transition: transform .12s ease;
+}
+.option:active { -webkit-transform: scale(0.97); transform: scale(0.97); }
+
+.icon { flex: 1 1 auto; display: flex; align-items: center; justify-content: center; }
+.icon svg { width: 38%; height: auto; }
+
+.play .icon  { background: linear-gradient(160deg, rgba(110,231,255,0.24), rgba(110,231,255,0.04)); }
+.play .icon svg  { stroke: #6ee7ff; }
+.photo .icon { background: linear-gradient(160deg, rgba(255,120,170,0.24), rgba(255,120,170,0.04)); }
+.photo .icon svg { stroke: #ff78aa; }
+
+.label { flex: 0 0 auto; padding: 2.4vh 1.5vw 2.8vh 1.5vw; }
+.name { font-size: 2.76vw; font-weight: 800; }
+.desc { font-size: 1.69vw; color: #d6daf0; margin-top: 0.8vh; }
+
+footer { flex: 0 0 auto; margin-top: 2.4vh; font-size: 1.69vw; color: #d6daf0; text-align: center; }

@@ -1,0 +1,273 @@
+<?xml version="1.0" encoding="UTF-8" ?><ChoregrapheProject xmlns="http://www.aldebaran-robotics.com/schema/choregraphe/project.xsd" xar_version="3"><Box name="root" id="-1" localization="8" tooltip="Root box of Choregraphe&apos;s behavior. Highest level possible." x="0" y="0"><bitmap>media/images/box/root.png</bitmap><script language="4"><content><![CDATA[]]></content></script><Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="Signal sent when diagram is loaded." id="1" /><Input name="onStart" type="1" type_size="1" nature="2" inner="0" tooltip="Box behavior starts when a signal is received on this input." id="2" /><Input name="onStop" type="1" type_size="1" nature="3" inner="0" tooltip="Box behavior stops when a signal is received on this input." id="3" /><Output name="onStopped" type="1" type_size="1" nature="1" inner="0" tooltip="Signal sent when box behavior is finished." id="4" /><Timeline enable="0"><BehaviorLayer name="behavior_layer1"><BehaviorKeyframe name="keyframe1" index="1"><Diagram scale="70.7107"><Box name="Intro" id="1" localization="8" tooltip="Say some text with animations. The text can be localized." x="150" y="60"><bitmap>media/images/box/interaction/say.png</bitmap><script language="4"><content><![CDATA[import time
+
+class MyClass(GeneratedClass):
+    def __init__(self):
+        GeneratedClass.__init__(self, False)
+        self.tts = ALProxy('ALAnimatedSpeech')
+        self.ttsStop = ALProxy('ALAnimatedSpeech', True) #Create another proxy as wait is blocking if audioout is remote
+
+    def onLoad(self):
+        self.bIsRunning = False
+        self.ids = []
+
+    def onUnload(self):
+        for id in self.ids:
+            try:
+                self.ttsStop.stop(id)
+            except:
+                pass
+        while( self.bIsRunning ):
+            time.sleep( 0.2 )
+
+    def onInput_onStart(self):
+        self.bIsRunning = True
+        try:
+            movement = self.getParameter("Speaking movement mode")
+            textParam = self.getParameter("Text")
+            if movement == "disabled":
+                textParam = "^start({0}) {1} ^wait({0})".format(self.getParameter("Animation"), textParam)
+            sentence = "\RSPD="+ str( self.getParameter("Speed (%)") ) + "\ "
+            sentence += "\VCT="+ str( self.getParameter("Voice shaping (%)") ) + "\ "
+            sentence += textParam
+            sentence +=  "\RST\ "
+            id = self.tts.post.say(str(sentence), {"speakingMovementMode":movement})
+            self.ids.append(id)
+            self.tts.wait(id, 0)
+        finally:
+            try:
+                self.ids.remove(id)
+            except:
+                pass
+            if( self.ids == [] ):
+                self.onStopped() # activate output of the box
+                self.bIsRunning = False
+
+    def onInput_onStop(self):
+        self.onUnload()]]></content></script><Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="Signal sent when Diagram is loaded." id="1" /><Input name="onStart" type="1" type_size="1" nature="2" inner="0" tooltip="Box behavior starts when a signal is received on this Input." id="2" /><Input name="onStop" type="1" type_size="1" nature="3" inner="0" tooltip="Box behavior stops when a signal is received on this Input." id="3" /><Output name="onStopped" type="1" type_size="1" nature="1" inner="0" tooltip="Signal sent when Box behavior is finished." id="4" /><Parameter name="Voice shaping (%)" inherits_from_parent="1" content_type="1" value="100" default_value="100" min="50" max="150" tooltip="Voice shaping" id="5" /><Parameter name="Speed (%)" inherits_from_parent="1" content_type="1" value="100" default_value="100" min="50" max="200" tooltip="Voice speed" id="6" /><Parameter name="Text" inherits_from_parent="0" content_type="5" value="Hi there! \pau=400\ While you wait, you can play a game, \pau=200\ or take a photo with me." default_value="" tooltip="The text you want to say. Don&apos;t forget to translate it!" id="7" /><Parameter name="Speaking movement mode" inherits_from_parent="0" content_type="3" value="contextual" default_value="contextual" custom_choice="0" tooltip="Change the body language mode during the speech." id="8"><Choice value="disabled" /><Choice value="random" /><Choice value="contextual" /></Parameter><Parameter name="Animation" inherits_from_parent="0" content_type="3" value="Stand/Gestures/Hey_6" default_value="" custom_choice="0" tooltip="The animation to play" id="9" /></Box><Box name="Show Web View (hub)" id="2" localization="8" tooltip="Shows the webview (html content) on the tablet.&#x0A;&#x0A;V1.0.0&#x0A;" x="420" y="60"><bitmap>media/images/box/internet/internet.png</bitmap><script language="4"><content><![CDATA[import time
+class MyClass(GeneratedClass):
+    def __init__(self):
+        GeneratedClass.__init__(self)
+
+    def onLoad(self):
+        pass
+
+    def onUnload(self):
+        pass
+
+    def _getTabletService(self):
+        try:
+            return self.session().service("ALTabletService")
+        except Exception as e:
+            self.logger.error(str(e))
+            return None
+
+    def onInput_onStart(self):
+        tabletService = self._getTabletService()
+        appName = self.packageUid()
+
+        if not appName:
+            self.logger.error("Package UID not found.")
+            self.onStopped()
+            return
+
+        if not tabletService:
+            self.logger.warning("ALTabletService not found.")
+            self.onStopped()
+            return
+
+        robotIP = "198.18.0.1"
+        url = "http://{ip}/apps/{appName}/pages/hub.html?t={t}".format(
+            ip=robotIP, appName=appName, t=int(time.time()))
+
+        try:
+            tabletService.cleanWebview()
+            self.logger.info("Opening tablet URL: " + url)
+            tabletService.showWebview(url)
+        except Exception as e:
+            self.logger.error("Tablet error: " + str(e))
+
+        self.onStopped()]]></content></script><Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="Signal sent when diagram is loaded." id="1" /><Input name="onStart" type="1" type_size="1" nature="2" inner="0" tooltip="Box behavior starts when a signal is received on this input." id="2" /><Output name="onStopped" type="1" type_size="1" nature="1" inner="0" tooltip="Signal sent when box behavior is finished." id="3" /></Box><Box name="hub_d" id="3" localization="8" tooltip="" x="650" y="60"><dialogFile>../hub_d/hub_d.dlg</dialogFile><bitmap>media/images/box/box-dialog.png</bitmap><script language="4"><content><![CDATA[]]></content></script><Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="Signal sent when diagram is loaded." id="1" /><Input name="onStart" type="1" type_size="1" nature="2" inner="0" tooltip="Box behavior starts when a signal is received on this input." id="2" /><Input name="onStop" type="1" type_size="1" nature="3" inner="0" tooltip="Box behavior stops when a signal is received on this input." id="3" /><Output name="onStopped" type="1" type_size="1" nature="1" inner="0" tooltip="Signal sent when box behavior is finished." id="4" /><Output name="launchGame" type="3" type_size="1" nature="2" inner="0" tooltip="" id="5" /><Output name="takePhoto" type="3" type_size="1" nature="2" inner="0" tooltip="" id="6" /></Box><Box name="Show Web View (game)" id="4" localization="8" tooltip="This box contains a basic python script and can be used to create any python script box you would like.&#x0A;&#x0A;To edit its script, double-click on it." x="880" y="60"><bitmap>media/images/box/box-python-script.png</bitmap><script language="4"><content><![CDATA[import time
+class MyClass(GeneratedClass):
+    def __init__(self):
+        GeneratedClass.__init__(self)
+
+    def onLoad(self):
+        pass
+
+    def onUnload(self):
+        pass
+
+    def onInput_onStart(self, pageName):
+        try:
+            tablet = self.session().service("ALTabletService")
+            appName = self.packageUid()
+            url = "http://198.18.0.1/apps/%s/pages/%s.html?t=%d" % (appName, pageName, int(time.time()))
+            self.logger.info("Showing page: " + url)
+            tablet.cleanWebview()
+            tablet.showWebview(url)
+        except Exception as e:
+            self.logger.error("Show Web View error: " + str(e))
+        self.onStopped()]]></content></script><Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="Signal sent when diagram is loaded." id="1" /><Input name="onStart" type="3" type_size="1" nature="2" inner="0" tooltip="Box behavior starts when a signal is received on this input." id="2" /><Input name="onStop" type="1" type_size="1" nature="3" inner="0" tooltip="Box behavior stops when a signal is received on this input." id="3" /><Output name="onStopped" type="1" type_size="1" nature="1" inner="0" tooltip="Signal sent when box behavior is finished." id="4" /></Box><Box name="Take Photo" id="5" localization="8" tooltip="Takes a photo with the head camera, saves it under html/photos and raises photoReady / photoFailed." x="880" y="200"><bitmap>media/images/box/box-python-script.png</bitmap><script language="4"><content><![CDATA[import os
+import glob
+import json
+import time
+import socket
+import binascii
+import threading
+
+class MyClass(GeneratedClass):
+    KEEP_SECONDS = 600       # photos are deleted after 10 minutes
+    MAX_FREEZE_SECONDS = 20  # never stay frozen longer than this, even if the tablet goes quiet
+    # Autonomous movements that would shake the camera. Paused while posing, restored afterwards.
+    MOVEMENT_SERVICES = ("ALBasicAwareness", "ALBackgroundMovement", "ALListeningMovement", "ALSpeakingMovement")
+
+    def __init__(self):
+        GeneratedClass.__init__(self)
+        self.timers = []
+        self.frozen = None
+        self.freezeTimer = None
+
+    def onLoad(self):
+        pass
+
+    def onUnload(self):
+        self._unfreeze()
+        for t in self.timers:
+            t.cancel()
+        self.timers = []
+        try:
+            for f in glob.glob(os.path.join(self._photoDir(), "*.jpg")):
+                self._deleteFile(f)
+        except Exception as e:
+            self.logger.warning("Photo cleanup error: " + str(e))
+
+    # --- holding still -------------------------------------------------------
+
+    def _freeze(self):
+        if self.frozen is not None:
+            return
+        self.frozen = {}
+        for name in self.MOVEMENT_SERVICES:
+            try:
+                svc = self.session().service(name)
+                self.frozen[name] = svc.isEnabled()
+                svc.setEnabled(False)
+            except Exception as e:
+                self.logger.warning("Could not pause %s: %s" % (name, e))
+        try:
+            motion = self.session().service("ALMotion")
+            self.frozen["breath"] = motion.getBreathEnabled("Body")
+            motion.setBreathEnabled("Body", False)
+        except Exception as e:
+            self.logger.warning("Could not pause breathing: " + str(e))
+        self.freezeTimer = threading.Timer(self.MAX_FREEZE_SECONDS, self._unfreeze)
+        self.freezeTimer.daemon = True
+        self.freezeTimer.start()
+
+    def _unfreeze(self):
+        if self.freezeTimer:
+            self.freezeTimer.cancel()
+            self.freezeTimer = None
+        if self.frozen is None:
+            return
+        frozen, self.frozen = self.frozen, None
+        for name, wasEnabled in frozen.items():
+            try:
+                if name == "breath":
+                    self.session().service("ALMotion").setBreathEnabled("Body", wasEnabled)
+                else:
+                    self.session().service(name).setEnabled(wasEnabled)
+            except Exception as e:
+                self.logger.warning("Could not restore %s: %s" % (name, e))
+
+    # --- photo storage -------------------------------------------------------
+
+    def _photoDir(self):
+        # <app>/behavior_1 -> <app>/html/photos, which the tablet web server exposes as /apps/<app>/photos/
+        appDir = os.path.dirname(os.path.normpath(self.behaviorAbsolutePath()))
+        folder = os.path.join(appDir, "html", "photos")
+        if not os.path.isdir(folder):
+            os.makedirs(folder)
+        return folder
+
+    def _deleteFile(self, f):
+        try:
+            if os.path.exists(f):
+                os.remove(f)
+        except Exception as e:
+            self.logger.warning("Could not delete photo " + f + ": " + str(e))
+
+    def _deleteExpired(self, folder):
+        now = time.time()
+        for f in glob.glob(os.path.join(folder, "*.jpg")):
+            if now - os.path.getmtime(f) > self.KEEP_SECONDS:
+                self._deleteFile(f)
+
+    def _usable(self, ip):
+        # 198.18.x is the private robot<->tablet link, not reachable from guests' phones
+        return ip and not ip.startswith("127.") and not ip.startswith("198.18.")
+
+    def _robotIp(self):
+        try:
+            for service in self.session().service("ALConnectionManager").services():
+                info = dict((pair[0], pair[1]) for pair in service)
+                if info.get("State") == "online":
+                    ipv4 = dict((pair[0], pair[1]) for pair in info.get("IPv4", []))
+                    if self._usable(ipv4.get("Address")):
+                        return ipv4["Address"]
+        except Exception as e:
+            self.logger.warning("ALConnectionManager lookup failed: " + str(e))
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        try:
+            s.connect(("10.255.255.255", 1))  # UDP connect sends nothing, it only picks the outgoing interface
+            ip = s.getsockname()[0]
+        finally:
+            s.close()
+        if not self._usable(ip):
+            raise Exception("No Wi-Fi address found (got " + str(ip) + ")")
+        return ip
+
+    # --- input: "prepare" (countdown started), "shoot", or "cancel" ----------
+
+    def onInput_onStart(self, command):
+        if command == "prepare":
+            self._freeze()
+            return
+        if command == "cancel":
+            self._unfreeze()
+            return
+
+        memory = self.session().service("ALMemory")
+        try:
+            if self.frozen is None:
+                self._freeze()
+                time.sleep(0.8)  # let the body settle if there was no countdown
+            folder = self._photoDir()
+            self._deleteExpired(folder)
+
+            # Random name so the link cannot be guessed by someone else on the Wi-Fi
+            name = "photo_" + binascii.hexlify(os.urandom(8))
+            camera = self.session().service("ALPhotoCapture")
+            camera.setCameraID(0)          # top camera, in the forehead
+            camera.setResolution(3)        # 1280x960
+            camera.setPictureFormat("jpg")
+            result = camera.takePicture(folder, name)
+            self._unfreeze()
+            if isinstance(result, (list, tuple)) and result and isinstance(result[0], basestring):
+                fileName = os.path.basename(result[0])
+            else:
+                fileName = name + ".jpg"
+
+            url = "http://%s/apps/%s/photos/%s" % (self._robotIp(), self.packageUid(), fileName)
+
+            timer = threading.Timer(self.KEEP_SECONDS, self._deleteFile, [os.path.join(folder, fileName)])
+            timer.daemon = True
+            timer.start()
+            self.timers.append(timer)
+
+            self.logger.info("Photo ready: " + url)
+            memory.raiseEvent("photoReady", json.dumps({"file": fileName, "url": url}))
+        except Exception as e:
+            self._unfreeze()
+            self.logger.error("Take Photo error: " + str(e))
+            memory.raiseEvent("photoFailed", str(e))]]></content></script><Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="Signal sent when diagram is loaded." id="1" /><Input name="onStart" type="3" type_size="1" nature="2" inner="0" tooltip="Box behavior starts when a signal is received on this input." id="2" /><Input name="onStop" type="1" type_size="1" nature="3" inner="0" tooltip="Box behavior stops when a signal is received on this input." id="3" /><Output name="onStopped" type="1" type_size="1" nature="1" inner="0" tooltip="Signal sent when box behavior is finished." id="4" /></Box><Link inputowner="1" indexofinput="2" outputowner="0" indexofoutput="2" /><Link inputowner="2" indexofinput="2" outputowner="1" indexofoutput="4" /><Link inputowner="3" indexofinput="2" outputowner="2" indexofoutput="3" /><Link inputowner="4" indexofinput="2" outputowner="3" indexofoutput="5" /><Link inputowner="5" indexofinput="2" outputowner="3" indexofoutput="6" /></Diagram></BehaviorKeyframe></BehaviorLayer></Timeline></Box></ChoregrapheProject>

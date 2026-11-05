@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Memory Match</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <script src="/libs/qi/2/qi.js"></script>
+    <script src="../js/jquery.js"></script>
+    <script src="../js/qievents.js"></script>
+
+    <link rel="stylesheet" type="text/css" href="../css/memory.css">
+</head>
+<body>
+    <div id="hurryGlow"></div>
+
+    <button type="button" id="menuButton" onclick="raiseConfirmationEvent('backToGames')">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11 L12 4 L21 11 M5 10 V20 H19 V10"/></svg>
+    </button>
+
+    <div class="screen on" id="levelScreen">
+        <h1>Memory Match</h1>
+        <p class="sub">Pick a difficulty.</p>
+        <div class="choices">
+            <button type="button" class="choice c-easy" id="easyChoice" onclick="chooseLevel('easy')">
+                <div class="big">Easy</div>
+                <span class="tag">4 pairs</span>
+                <div class="desc">Eight cards. Find the matching games.</div>
+            </button>
+            <button type="button" class="choice c-hard" id="hardChoice" onclick="chooseLevel('hard')">
+                <div class="big">Hard</div>
+                <span class="tag">7 pairs</span>
+                <div class="desc">Fourteen cards, with more pictures to remember.</div>
+            </button>
+        </div>
+    </div>
+
+    <div class="screen" id="gameScreen">
+        <header>
+            <h1>Memory Match</h1>
+            <div class="stats"><span class="level" id="levelTag"></span>Moves&nbsp;<span id="movesVal">0</span></div>
+            <div class="timebox" id="timebox">
+                <div class="timebar"><div class="timefill" id="timeFill"></div></div>
+                <div class="timetext" id="timeText"></div>
+            </div>
+        </header>
+
+        <div class="stage">
+            <div id="grid"></div>
+
+            <div class="final" id="finalScreen">
+                <h2 id="finalTitle">All Matched!</h2>
+                <p id="finalSub">Finished in 0 moves.</p>
+                <div class="endButtons">
+                    <button type="button" id="changeLevelButton" onclick="showScreen('levelScreen')">Change Level</button>
+                    <button type="button" id="playAgainButton" onclick="startGame()">Play Again</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/memory.js"></script>
+</body>
+</html>

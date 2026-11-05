@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Tic-Tac-Toe</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <script src="/libs/qi/2/qi.js"></script>
+    <script src="../js/jquery.js"></script>
+    <script src="../js/qievents.js"></script>
+
+    <link rel="stylesheet" type="text/css" href="../css/ttt.css">
+</head>
+<body>
+    <button type="button" id="menuButton" onclick="raiseConfirmationEvent('backToGames')">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11 L12 4 L21 11 M5 10 V20 H19 V10"/></svg>
+    </button>
+
+    <div class="screen on" id="modeScreen">
+        <h1>Tic-Tac-Toe</h1>
+        <p class="sub">Who's playing?</p>
+        <div class="choices">
+            <button type="button" class="choice c-pvp" id="pvpChoice" onclick="choosePvp()">
+                <div class="big">2 Players</div>
+                <span class="tag">Player vs Player</span>
+                <div class="desc">Take turns on the tablet. I'll keep score.</div>
+            </button>
+            <button type="button" class="choice c-pep" id="pepperChoice" onclick="showScreen('levelScreen')">
+                <div class="big">Vs Pepper</div>
+                <span class="tag">Player vs Pepper</span>
+                <div class="desc">Play against me. You pick how hard.</div>
+            </button>
+        </div>
+    </div>
+
+    <div class="screen" id="levelScreen">
+        <h1>Pick a difficulty</h1>
+        <p class="sub">How hard should Pepper play?</p>
+        <div class="choices levels">
+            <button type="button" class="choice c-low" id="lowChoice" onclick="chooseLevel('low')">
+                <div class="big">Low</div>
+                <span class="tag">Easy</span>
+                <div class="desc">I'll go easy on you.</div>
+            </button>
+            <button type="button" class="choice c-med" id="mediumChoice" onclick="chooseLevel('medium')">
+                <div class="big">Medium</div>
+                <span class="tag">Fair fight</span>
+                <div class="desc">I'll try to win, but I make mistakes.</div>
+            </button>
+            <button type="button" class="choice c-high" id="highChoice" onclick="chooseLevel('high')">
+                <div class="big">High</div>
+                <span class="tag">Unbeatable</span>
+                <div class="desc">I never lose. Can you force a draw?</div>
+            </button>
+        </div>
+        <button type="button" class="linkBtn" onclick="showScreen('modeScreen')">Back</button>
+    </div>
+
+    <div class="screen" id="gameScreen">
+        <h1>Tic-Tac-Toe</h1>
+        <div class="scoreboard">
+            <span class="p1"><span id="p1Name">You (X)</span> <span id="p1Score">0</span></span>
+            <span class="sep">—</span>
+            <span class="p2"><span id="p2Name">Pepper (O)</span> <span id="p2Score">0</span></span>
+            <span class="sep">—</span>
+            <span class="draw">Draws <span id="drawScore">0</span></span>
+        </div>
+        <div class="modeTag" id="modeTag"></div>
+        <div id="status"></div>
+        <div id="board"></div>
+        <div class="endButtons" id="endButtons">
+            <button type="button" id="changeModeButton" onclick="showScreen('modeScreen')">Change Mode</button>
+            <button type="button" id="playAgainButton" onclick="newGame()">Play Again</button>
+        </div>
+    </div>
+
+    <script src="../js/ttt.js"></script>
+</body>
+</html>

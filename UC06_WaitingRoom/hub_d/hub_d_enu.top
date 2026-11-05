@@ -1,0 +1,78 @@
+topic: ~hub_d()
+language: enu
+
+# This dialog never sets $onStopped - it runs for the whole waiting-room
+# session and keeps reacting to tablet taps and voice, looping between
+# screens until staff stops the behavior when the guest's booking starts.
+# $launchGame=<page> shows html/pages/<page>.html via the "Show Web View (game)" box.
+
+# Main menu
+u:(e:playSelected) Let's play! $launchGame=games
+u:(e:photoSelected) Let's take a photo together! $launchGame=photo
+u:(["play a game" "let us play" "I want to play"]) Let's play! $launchGame=games
+u:(["take a photo" "take a picture" "take a selfie"]) Let's take a photo together! $launchGame=photo
+
+u:(e:backToHub) $launchGame=hub
+u:(e:backToGames) $launchGame=games
+
+# Games menu
+u:(e:rpsSelected) Rock paper scissors! \pau=300\ Let's play. $launchGame=rps
+u:(e:moleSelected) Whack a mole time! \pau=300\ Get ready. $launchGame=mole
+u:(e:memorySelected) Memory match! \pau=300\ Good luck. $launchGame=memory
+u:(e:tttSelected) Tic tac toe! $launchGame=ttt
+
+# Game reactions use Pepper's built-in animations (names checked against the robot's installed list).
+# ^start(anim) ... ^wait(anim) plays the move while speaking and lets it finish: used for the big
+# end-of-game reactions. Per-round reactions only ^start, so fast rounds aren't held up.
+# ^rand picks one line at random so Pepper doesn't repeat itself. No $onStopped/$launchGame here:
+# these are just reactions, hub_d keeps listening right after.
+# \vct=120\ raises the voice pitch for the laugh, \vct=100\ puts it back to normal
+# (NAOqi 2.5's dialog parser rejects the reset tag).
+
+# Rock Paper Scissors: quick gesture every round, big reaction at the end of the best of three.
+u:(e:rpsRoundTie) ^start(animations/Stand/Gestures/Surprised_1) ^rand["Ooh, a tie!" "Same move! Again!" "Great minds think alike!"]
+u:(e:rpsRoundWin) ^start(animations/Stand/Gestures/Desperate_1) ^rand["Oh no, you got me!" "Hey! Lucky shot." "Ouch!"]
+u:(e:rpsRoundLose) ^start(animations/Stand/Emotions/Positive/Mocker_1) ^rand["Ha, gotcha!" "One point for me!" "Too easy!"]
+u:(e:rpsFinalWin) ^start(animations/Stand/Emotions/Negative/Frustrated_1) ^rand["Nooo! You beat me!" "I can't believe it, you win!"] \pau=300\ Well played. ^wait(animations/Stand/Emotions/Negative/Frustrated_1)
+u:(e:rpsFinalLose) ^start(animations/Stand/Emotions/Positive/Winner_1) Victory is mine! ^wait(animations/Stand/Emotions/Positive/Winner_1) ^start(animations/Stand/Emotions/Positive/Laugh_1) \vct=120\ Ha ha ha! \vct=100\ ^wait(animations/Stand/Emotions/Positive/Laugh_1)
+
+# Whack-a-Mole: level pick, then one reaction to the final score (per-hit would overlap too fast to be heard).
+u:(e:moleLevelEasy) ^start(animations/Stand/Gestures/CalmDown_1) Easy mode. \pau=200\ Warm up those hands!
+u:(e:moleLevelHard) ^start(animations/Stand/Emotions/Positive/Confident_1) Hard mode! \pau=200\ Twenty five holes. \pau=200\ Be quick!
+u:(e:moleGreat) ^start(animations/Stand/Emotions/Positive/Ecstatic_1) Wow, fast hands! \pau=200\ You're a mole master! ^wait(animations/Stand/Emotions/Positive/Ecstatic_1)
+u:(e:moleGood) ^start(animations/Stand/Gestures/Great_1) Nice reflexes! ^wait(animations/Stand/Gestures/Great_1)
+u:(e:moleTry) ^start(animations/Stand/Emotions/Positive/Optimistic_1) Good hustle! \pau=200\ Try again, you'll get them! ^wait(animations/Stand/Emotions/Positive/Optimistic_1)
+
+# Memory Match: level pick, a nudge when a quarter of the time is left, and a reaction on
+# completion (tiered by move count) or when time runs out.
+u:(e:memoryLevelEasy) ^start(animations/Stand/Gestures/Yes_1) Easy mode. \pau=200\ Four pairs to find.
+u:(e:memoryLevelHard) ^start(animations/Stand/Gestures/ComeOn_1) Hard mode! \pau=200\ Seven pairs. \pau=200\ Good luck!
+u:(e:memoryHurry) ^start(animations/Stand/Gestures/ComeOn_1) Hurry, \pau=150\ time is running out!
+u:(e:memoryTimeout) ^start(animations/Stand/Emotions/Negative/Disappointed_1) Time's up! \pau=200\ So close. \pau=200\ Try again? ^wait(animations/Stand/Emotions/Negative/Disappointed_1)
+u:(e:memoryGreat) ^start(animations/Stand/Gestures/Enthusiastic_4) Wow, sharp memory! ^wait(animations/Stand/Gestures/Enthusiastic_4)
+u:(e:memoryGood) ^start(animations/Stand/Gestures/Yes_2) Nice job! ^wait(animations/Stand/Gestures/Yes_2)
+u:(e:memoryTry) ^start(animations/Stand/Emotions/Positive/Happy_2) You found them all! ^wait(animations/Stand/Emotions/Positive/Happy_2)
+
+# Tic-Tac-Toe: setup choice, then reactions. In 2-player mode Pepper is the referee.
+u:(e:tttPvp) ^start(animations/Stand/Gestures/Yes_1) Two players! \pau=200\ I'll keep score.
+u:(e:tttLevelLow) ^start(animations/Stand/Gestures/CalmDown_1) Easy mode. \pau=200\ I'll go gentle.
+u:(e:tttLevelMedium) ^start(animations/Stand/Gestures/ComeOn_1) Medium. \pau=200\ A fair fight!
+u:(e:tttLevelHigh) ^start(animations/Stand/Emotions/Positive/Confident_1) Hard mode? \pau=200\ Good luck, \pau=200\ I never lose. ^wait(animations/Stand/Emotions/Positive/Confident_1)
+u:(e:tttBlock) ^start(animations/Stand/Gestures/No_3) ^rand["Not so fast!" "Nice try!" "I saw that coming!"]
+u:(e:tttWin) ^start(animations/Stand/Emotions/Negative/Disappointed_1) ^rand["Oh no, you beat me!" "What? You won!"] \pau=300\ Nice moves. ^wait(animations/Stand/Emotions/Negative/Disappointed_1)
+u:(e:tttLose) ^start(animations/Stand/Emotions/Positive/Laugh_2) \vct=120\ Ha ha ha! \vct=100\ Three in a row, \pau=200\ I win! ^wait(animations/Stand/Emotions/Positive/Laugh_2)
+u:(e:tttDraw) ^start(animations/Stand/Gestures/IDontKnow_1) A draw! \pau=200\ Good game. ^wait(animations/Stand/Gestures/IDontKnow_1)
+u:(e:tttXWins) ^start(animations/Stand/Gestures/Great_1) Player X wins! ^wait(animations/Stand/Gestures/Great_1)
+u:(e:tttOWins) ^start(animations/Stand/Gestures/Great_1) Player O wins! ^wait(animations/Stand/Gestures/Great_1)
+
+
+# Take a Photo - photo.html raises photoPrepare when its 3-2-1 countdown starts and
+# photoTake when it ends. $takePhoto drives the "Take Photo" box: "prepare" makes Pepper
+# hold still (autonomous movements paused), "shoot" takes the picture and raises
+# photoReady or photoFailed, "cancel" lets Pepper move again if the guest leaves.
+# ^mode(disabled) keeps "Cheese!" free of gestures so the camera doesn't move.
+u:(e:photoPrepare) $takePhoto=prepare
+u:(e:photoCancel) $takePhoto=cancel
+u:(e:photoTake) ^mode(disabled) Cheese! $takePhoto=shoot
+u:(e:photoReady) Here you go! \pau=300\ Scan the code to keep your photo.
+u:(e:photoFailed) Sorry, \pau=200\ my camera had a problem.

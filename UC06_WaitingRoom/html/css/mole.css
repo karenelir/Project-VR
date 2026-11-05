@@ -1,0 +1,110 @@
+* { -webkit-box-sizing: border-box; box-sizing: border-box; }
+html, body { height: 100%; margin: 0; padding: 0; }
+body {
+    background: #181b28;
+    color: #ffffff;
+    font-family: "Roboto", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    padding: 2.4vh 3vw;
+    overflow: hidden;
+    -webkit-user-select: none; user-select: none;
+}
+
+#menuButton {
+    position: absolute; top: 2.4vh; left: 3vw;
+    width: 6.5vh; height: 6.5vh;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.1);
+    border: 2px solid rgba(255,255,255,0.25);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; -webkit-appearance: none;
+    z-index: 10;
+}
+#menuButton svg { width: 55%; height: 55%; stroke: #ffffff; }
+
+.screen { flex: 1 1 auto; min-height: 0; display: none; flex-direction: column; }
+.screen.on { display: flex; }
+#levelScreen { align-items: center; justify-content: center; }
+
+h1 { margin: 0; font-size: 3.3vw; font-weight: 800; text-align: center; }
+.sub { font-size: 1.95vw; color: #d6daf0; margin: 1vh 0 4vh 0; text-align: center; }
+
+/* Difficulty choices: same cards as Tic-Tac-Toe's setup screen. */
+.choices { display: flex; flex-direction: row; }
+.choice {
+    -webkit-appearance: none; cursor: pointer;
+    font: inherit; color: #ffffff; text-align: left;
+    width: 27vw; margin: 0 1.2vw; padding: 4vh 2.2vw;
+    border-radius: 1.6vw;
+    background: #242838; border: 2px solid rgba(255,255,255,0.15);
+    -webkit-transition: -webkit-transform .12s ease; transition: transform .12s ease;
+}
+.choice:active { -webkit-transform: scale(0.96); transform: scale(0.96); }
+.choice .big { font-size: 3.22vw; font-weight: 800; }
+.choice .tag {
+    display: inline-block; margin: 1.2vh 0 1.4vh 0;
+    font-size: 1.4vw; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;
+    padding: 0.4vh 0.9vw; border-radius: 2vw;
+}
+.choice .desc { font-size: 1.82vw; color: #d6daf0; line-height: 1.35; }
+.c-easy .tag { background: rgba(143,226,90,0.2); color: #8fe25a; }
+.c-hard .tag { background: rgba(255,107,107,0.2); color: #ff6b6b; }
+.c-hard { border-color: rgba(255,107,107,0.45); }
+
+header { flex: 0 0 auto; text-align: center; margin-bottom: 1.4vh; }
+.stats {
+    display: flex; flex-direction: row; justify-content: center; align-items: center;
+    margin-top: 1.2vh; font-size: 2.08vw; font-weight: 700;
+}
+.stats .level { font-size: 1.47vw; letter-spacing: 2px; text-transform: uppercase; padding: 0.4vh 0.9vw; border-radius: 2vw; margin-right: 2.4vw; }
+.stats .level.easy { background: rgba(143,226,90,0.2); color: #8fe25a; }
+.stats .level.hard { background: rgba(255,107,107,0.2); color: #ff6b6b; }
+.stats .score { color: #ff8c5a; }
+.stats .time  { color: #7fecff; margin-left: 2.4vw; }
+
+.stage { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+
+#grid { display: flex; flex-direction: column; }
+.grow { display: flex; flex-direction: row; }
+
+/* Holes are plain divs, not buttons: the tablet's old browser can't size a percentage-height
+   child inside a <button> (the mole came out 0px tall and never showed). The mole is
+   absolutely positioned so its size always resolves against the hole. */
+.hole {
+    cursor: pointer;
+    width: 14vh; height: 14vh; margin: 1vh;
+    border-radius: 50%;
+    background: radial-gradient(circle at 50% 60%, #0c0e16 0%, #1c1f2e 70%);
+    border: 2px solid rgba(255,255,255,0.1);
+    position: relative;
+    -webkit-tap-highlight-color: rgba(0,0,0,0);
+}
+/* Hard is a 5x5 board: smaller holes so it still fits under the header. */
+#grid.hard .hole { width: 11vh; height: 11vh; margin: 0.7vh; }
+.mole {
+    position: absolute; top: 15%; left: 15%;
+    width: 70%; height: 70%; border-radius: 50%;
+    background: linear-gradient(160deg, #ffb27a, #ff8c5a);
+    display: none;
+}
+.hole.up .mole { display: block; }
+.mole .eye { position: absolute; width: 8%; height: 8%; border-radius: 50%; background: #241406; top: 38%; }
+.mole .eye.l { left: 30%; } .mole .eye.r { right: 30%; }
+.mole .mouth { position: absolute; width: 30%; height: 12%; border: 0.4vh solid #241406; border-top: 0; border-radius: 0 0 60% 60%; bottom: 26%; left: 35%; }
+.hole.hit .mole { background: linear-gradient(160deg, #8fe25a, #5fb52e); }
+
+.final {
+    display: none;
+    flex-direction: column; align-items: center; justify-content: center;
+}
+.final h2 { font-size: 3.74vw; font-weight: 800; margin: 0 0 1vh 0; color: #8fe25a; }
+.final p { font-size: 1.95vw; color: #d6daf0; margin: 0 0 3vh 0; }
+.endButtons { display: flex; flex-direction: row; }
+.endButtons button {
+    -webkit-appearance: none; cursor: pointer; margin: 0 0.6vw;
+    padding: 2.34vh 3.9vw; border-radius: 6vw;
+    font-weight: 800; font-size: 2.08vw; letter-spacing: 1px; text-transform: uppercase;
+}
+#playAgainButton { border: 0; background: linear-gradient(135deg, #ff8c5a, #d9731a); color: #241406; }
+#changeLevelButton { background: transparent; color: #ffffff; border: 2px solid rgba(255,255,255,0.35); }

@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Take a Photo</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <script src="/libs/qi/2/qi.js"></script>
+    <script src="../js/jquery.js"></script>
+    <script src="../js/qievents.js"></script>
+    <script src="../js/qrcode.js"></script>
+
+    <link rel="stylesheet" type="text/css" href="../css/photo.css">
+</head>
+<body>
+    <button type="button" id="menuButton" onclick="leave()">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11 L12 4 L21 11 M5 10 V20 H19 V10"/></svg>
+    </button>
+
+    <div class="screen on" id="readyScreen">
+        <div class="cam">
+            <svg viewBox="0 0 100 100" fill="none" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 34 H30 L36 24 H64 L70 34 H86 V78 H14 Z"/><circle cx="50" cy="55" r="14"/>
+            </svg>
+        </div>
+        <span class="kicker">Photo with Pepper</span>
+        <h1>Ready for your photo?</h1>
+        <p class="sub">I'll count down from 3, then take your picture with the camera in my head. Look at my eyes and smile!</p>
+        <button type="button" class="btn primary" onclick="startCountdown()">I'm Ready</button>
+    </div>
+
+    <div class="screen" id="countScreen">
+        <div id="count">3</div>
+        <p class="sub" style="margin-top:2vh;">Look at Pepper's eyes!</p>
+    </div>
+
+    <div class="screen" id="processingScreen">
+        <div class="spinner"></div>
+        <h1>Cheese!</h1>
+        <p class="sub">Getting your photo ready...</p>
+    </div>
+
+    <div class="screen result" id="resultScreen">
+        <div class="shot"><img id="photoImg" src="" alt="Your photo"></div>
+        <div class="side">
+            <h2>Keep your photo</h2>
+            <p>Connect to the venue Wi-Fi, then scan this code with your phone camera.</p>
+            <div class="qr" id="qrBox"></div>
+            <p style="font-size: 1.4vw;margin-bottom:2vh;">For your privacy, this photo is deleted after 10 minutes.</p>
+            <div class="row">
+                <button type="button" class="btn ghost" onclick="showScreen('readyScreen')">Retake</button>
+                <button type="button" class="btn primary" onclick="leave()">Done</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="screen" id="errorScreen">
+        <h1>Oops!</h1>
+        <p class="sub">I couldn't take the photo this time. Want to try again?</p>
+        <div class="row">
+            <button type="button" class="btn ghost" onclick="leave()">Back</button>
+            <button type="button" class="btn primary" onclick="showScreen('readyScreen')">Try Again</button>
+        </div>
+    </div>
+
+    <script src="../js/photo.js"></script>
+</body>
+</html>

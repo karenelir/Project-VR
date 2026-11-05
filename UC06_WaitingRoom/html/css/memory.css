@@ -1,0 +1,130 @@
+* { -webkit-box-sizing: border-box; box-sizing: border-box; }
+html, body { height: 100%; margin: 0; padding: 0; }
+body {
+    background: #181b28;
+    color: #ffffff;
+    font-family: "Roboto", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    padding: 2.4vh 3vw;
+    overflow: hidden;
+    -webkit-user-select: none; user-select: none;
+}
+
+#menuButton {
+    position: absolute; top: 2.4vh; left: 3vw;
+    width: 6.5vh; height: 6.5vh;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.1);
+    border: 2px solid rgba(255,255,255,0.25);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; -webkit-appearance: none;
+    z-index: 10;
+}
+#menuButton svg { width: 55%; height: 55%; stroke: #ffffff; }
+
+.screen { flex: 1 1 auto; min-height: 0; display: none; flex-direction: column; }
+.screen.on { display: flex; }
+#levelScreen { align-items: center; justify-content: center; }
+
+h1 { margin: 0; font-size: 3.3vw; font-weight: 800; text-align: center; }
+.sub { font-size: 1.95vw; color: #d6daf0; margin: 1vh 0 4vh 0; text-align: center; }
+
+/* Difficulty choices: same cards as Tic-Tac-Toe's setup screen. */
+.choices { display: flex; flex-direction: row; }
+.choice {
+    -webkit-appearance: none; cursor: pointer;
+    font: inherit; color: #ffffff; text-align: left;
+    width: 27vw; margin: 0 1.2vw; padding: 4vh 2.2vw;
+    border-radius: 1.6vw;
+    background: #242838; border: 2px solid rgba(255,255,255,0.15);
+    -webkit-transition: -webkit-transform .12s ease; transition: transform .12s ease;
+}
+.choice:active { -webkit-transform: scale(0.96); transform: scale(0.96); }
+.choice .big { font-size: 3.22vw; font-weight: 800; }
+.choice .tag {
+    display: inline-block; margin: 1.2vh 0 1.4vh 0;
+    font-size: 1.4vw; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;
+    padding: 0.4vh 0.9vw; border-radius: 2vw;
+}
+.choice .desc { font-size: 1.82vw; color: #d6daf0; line-height: 1.35; }
+.c-easy .tag { background: rgba(143,226,90,0.2); color: #8fe25a; }
+.c-hard .tag { background: rgba(255,107,107,0.2); color: #ff6b6b; }
+.c-hard { border-color: rgba(255,107,107,0.45); }
+
+header { flex: 0 0 auto; text-align: center; margin-bottom: 1.4vh; }
+.stats {
+    display: flex; flex-direction: row; justify-content: center; align-items: center;
+    margin-top: 1.2vh; font-size: 2.08vw; font-weight: 700; color: #be8cff;
+}
+.stats .level { font-size: 1.47vw; letter-spacing: 2px; text-transform: uppercase; padding: 0.4vh 0.9vw; border-radius: 2vw; margin-right: 2.4vw; }
+.stats .level.easy { background: rgba(143,226,90,0.2); color: #8fe25a; }
+.stats .level.hard { background: rgba(255,107,107,0.2); color: #ff6b6b; }
+
+/* Time bar: drains from right to left. In the last 25% it turns red and pulses, the label
+   says "Hurry!" and a red glow pulses around the screen. */
+.timebox { display: flex; flex-direction: row; align-items: center; width: 62vw; margin: 1.6vh auto 0 auto; }
+.timebar { flex: 1 1 auto; height: 2.6vh; border-radius: 1.3vh; background: rgba(255,255,255,0.1); overflow: hidden; }
+.timefill { height: 100%; width: 100%; border-radius: 1.3vh; background: linear-gradient(90deg, #7a4fd1, #be8cff); }
+.timetext { flex: 0 0 auto; width: 11vw; margin-left: 1.2vw; text-align: left; font-size: 1.82vw; font-weight: 800; color: #be8cff; }
+.timebox.low .timefill {
+    background: linear-gradient(90deg, #ff3d3d, #ff9a5a);
+    -webkit-animation: pulse .5s ease-in-out infinite alternate; animation: pulse .5s ease-in-out infinite alternate;
+}
+.timebox.low .timetext {
+    color: #ff6b6b;
+    -webkit-animation: pulse .5s ease-in-out infinite alternate; animation: pulse .5s ease-in-out infinite alternate;
+}
+#hurryGlow {
+    display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none; z-index: 5;
+    -webkit-box-shadow: inset 0 0 9vh rgba(255, 50, 50, 0.55); box-shadow: inset 0 0 9vh rgba(255, 50, 50, 0.55);
+    -webkit-animation: glow 1s ease-in-out infinite alternate; animation: glow 1s ease-in-out infinite alternate;
+}
+body.hurry #hurryGlow { display: block; }
+@-webkit-keyframes pulse { from { opacity: 1; } to { opacity: 0.45; } }
+@keyframes pulse { from { opacity: 1; } to { opacity: 0.45; } }
+@-webkit-keyframes glow { from { opacity: 0.25; } to { opacity: 1; } }
+@keyframes glow { from { opacity: 0.25; } to { opacity: 1; } }
+
+.stage { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+
+#grid { display: flex; flex-direction: column; }
+.grow { display: flex; flex-direction: row; }
+
+.card {
+    -webkit-appearance: none; border: 0; cursor: pointer;
+    width: 18vh; height: 18vh; margin: 1.1vh;
+    border-radius: 1.4vw;
+    position: relative;
+    overflow: hidden;
+    background: #242838; border: 2px solid rgba(255,255,255,0.15);
+    display: flex; align-items: center; justify-content: center;
+    -webkit-transition: -webkit-transform .12s ease; transition: transform .12s ease;
+}
+/* Hard lays 14 cards out 7 across: tighter spacing so the row fits the tablet. */
+#grid.hard .card { margin: 0.9vh; }
+.card:active { -webkit-transform: scale(0.95); transform: scale(0.95); }
+.card .back  { width: 42%; height: 42%; stroke: #be8cff; opacity: 0.9; }
+.card .front {
+    width: 100%; height: 100%; object-fit: cover;
+    display: none; position: absolute; top: 0; left: 0;
+}
+.card.flipped .back  { display: none; }
+.card.flipped .front { display: block; }
+.card.matched { border-color: rgba(143, 226, 90, 0.8); box-shadow: inset 0 0 0 3px rgba(143, 226, 90, 0.5); }
+
+.final {
+    display: none;
+    flex-direction: column; align-items: center; justify-content: center;
+}
+.final h2 { font-size: 3.74vw; font-weight: 800; margin: 0 0 1vh 0; color: #8fe25a; }
+.final h2.timeout { color: #ff6b6b; }
+.final p { font-size: 1.95vw; color: #d6daf0; margin: 0 0 3vh 0; }
+.endButtons { display: flex; flex-direction: row; }
+.endButtons button {
+    -webkit-appearance: none; cursor: pointer; margin: 0 0.6vw;
+    padding: 2.34vh 3.9vw; border-radius: 6vw;
+    font-weight: 800; font-size: 2.08vw; letter-spacing: 1px; text-transform: uppercase;
+}
+#playAgainButton { border: 0; background: linear-gradient(135deg, #be8cff, #7a4fd1); color: #140a24; }
+#changeLevelButton { background: transparent; color: #ffffff; border: 2px solid rgba(255,255,255,0.35); }
