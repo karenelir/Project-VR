@@ -60,6 +60,13 @@
         <File name="outbreak" src="html/videos/outbreak.mp4" />
         <File name="spacemarines" src="html/videos/spacemarines.mp4" />
         <File name="spacemarines_mode" src="html/pages/spacemarines_mode.html" />
+        <File name="confirmation" src="html/css/confirmation.css" />
+        <File name="displayvideo" src="html/css/displayvideo.css" />
+        <File name="gamelist" src="html/css/gamelist.css" />
+        <File name="spacemarines_mode" src="html/css/spacemarines_mode.css" />
+        <File name="confirmation" src="html/js/confirmation.js" />
+        <File name="displayvideo" src="html/js/displayvideo.js" />
+        <File name="gamelist" src="html/js/gamelist.js" />
     </Resources>
     <Topics>
         <Topic name="confirmation_d_enu" src="confirmation_d/confirmation_d_enu.top" topicName="confirmation_d" language="en_US" />

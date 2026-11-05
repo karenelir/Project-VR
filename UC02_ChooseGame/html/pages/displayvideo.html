@@ -3,24 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <style>
-    html, body { margin:0; padding:0; background:#000; height:100%; overflow:hidden; }
-    video { position:absolute; top:0; left:0; width:100%; height:100%; object-fit:contain; background:#000; }
-  </style>
+  <link rel="stylesheet" type="text/css" href="../css/displayvideo.css">
   <script src="../js/jquery.js"></script>
   <script src="../js/displayinfo.js"></script>
 </head>
 <body>
   <video id="pageVideo" autoplay muted loop playsinline></video>
-  <script>
-    var videoName = decodeURIComponent(getUrlParam("pageVideo", ""));
-    var el = document.getElementById("pageVideo");
-    if (videoName) {
-      el.src = "../videos/" + videoName;
-      el.load();
-      var p = el.play();
-      if (p && p.catch) { p.catch(function (e) { console.log("play() failed: " + e); }); }
-    }
-  </script>
+  <script src="../js/displayvideo.js"></script>
 </body>
 </html>

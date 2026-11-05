@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<package uuid="uc02_choosegame-365adb" version="0.0.0">
+<package version="0.0.0" uuid="uc02_choosegame-365adb">
  <names>
   <name lang="en_US">UC02 - Choose a Game</name>
  </names>

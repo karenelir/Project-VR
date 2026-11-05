@@ -11,97 +11,7 @@
 
     <!-- Written for Pepper's older tablet browser: flexbox only (no CSS grid, no CSS variables, no "gap"),
          and every size is relative (vw / vh / %) so it scales to whatever screen size the tablet reports. -->
-    <style>
-        * { -webkit-box-sizing: border-box; box-sizing: border-box; }
-        html, body { height: 100%; margin: 0; padding: 0; }
-        body {
-            background: #10131c;
-            color: #f4f1ff;
-            font-family: "Roboto", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
-            display: flex;
-            flex-direction: column;
-            padding: 2.5vh 3vw 2vh 3vw;
-            overflow: hidden;
-            -webkit-user-select: none; user-select: none;
-        }
-
-        header { flex: 0 0 auto; margin-bottom: 2.5vh; }
-        h1 { margin: 0; font-size: 4.4vw; line-height: 1.1; font-weight: 800; }
-        header p { margin: 0.8vh 0 0 0; font-size: 1.9vw; color: #a9afc7; }
-
-        .games {
-            flex: 1 1 auto;
-            min-height: 0;
-            display: flex;
-            flex-direction: row;
-            margin: 0 -0.9vw;          /* cancels the outer card margins */
-        }
-
-        .card {
-            width: 33.33%;
-            margin: 0 0.9vw;
-            padding: 0;
-            border: 0;
-            -webkit-appearance: none;
-            font: inherit; text-align: left; cursor: pointer;
-            border-radius: 2vw;
-            overflow: hidden;
-            position: relative;
-            display: flex;
-            flex-direction: column;
-            -webkit-transition: opacity .25s ease; transition: opacity .25s ease;
-        }
-        .card:active { opacity: .85; }
-
-        .outbreak     { color: #13200a; background: linear-gradient(160deg, #b4e25a, #6f9e22); }
-        .farcry       { color: #2a1402; background: linear-gradient(160deg, #ffbe73, #d9731a); }
-        .spacemarines { color: #0c1636; background: linear-gradient(160deg, #a3bcff, #4a6be0); }
-
-        .art {
-            flex: 1 1 auto;
-            min-height: 20vh;
-            position: relative;
-            display: flex; align-items: center; justify-content: center;
-            background: rgba(0, 0, 0, 0.18);
-        }
-        .art svg { width: 30%; height: auto; opacity: .6; }
-        .outbreak .art svg     { stroke: #13200a; }
-        .farcry .art svg       { stroke: #2a1402; }
-        .spacemarines .art svg { stroke: #0c1636; }
-        .art img {
-            position: absolute; top: 0; left: 0;
-            width: 100%; height: 100%; object-fit: cover;
-        }
-        /* outbreak.png and farcry.png have a 'Trending' badge in the top-right: shift the crop
-           left and down to hide it (the extra Duration fact row shortened the art box, so the old
-           27%/25% horizontal-only shift no longer covers it vertically). */
-        .outbreak .art img { object-position: 15% 65%; }
-        .farcry .art img { object-position: 15% 65%; }
-
-        .info { flex: 0 0 auto; padding: 1.4vh 1.7vw 1.8vh 1.7vw; }
-        .name { font-size: 3.4vw; font-weight: 800; line-height: 1.05; }
-        .style { font-size: 1.6vw; font-weight: 600; margin: 0.4vh 0 0.8vh 0; opacity: .85; }
-        .desc { font-size: 1.45vw; line-height: 1.25; margin: 0 0 1.2vh 0; }
-
-        .fact { display: flex; align-items: baseline; margin-top: 0.4vh; font-size: 1.45vw; }
-        .fact .label { width: 7.5vw; font-weight: 700; }
-        .fact .value { font-weight: 500; }
-
-        /* state after a tap: the chosen card stays, the others fade */
-        .badge {
-            position: absolute; top: 1.4vw; left: 1.4vw;
-            background: #10131c; color: #ffffff;
-            font-size: 1.7vw; font-weight: 700;
-            padding: 0.6vw 1.5vw; border-radius: 3vw;
-            display: none;
-        }
-        .card.chosen { -webkit-box-shadow: 0 0 0 0.5vw #f4f1ff; box-shadow: 0 0 0 0.5vw #f4f1ff; }
-        .card.chosen .badge { display: block; }
-        body.locked .card { pointer-events: none; }
-        body.locked .card.fade { opacity: .3; }
-
-        footer { flex: 0 0 auto; margin-top: 2vh; font-size: 1.7vw; color: #a9afc7; }
-    </style>
+    <link rel="stylesheet" type="text/css" href="../css/gamelist.css">
 </head>
 
 <body>
@@ -177,18 +87,6 @@
 
     <footer>Not sure? Say "I don't know" and Pepper will help you narrow it down.</footer>
 
-    <script type="text/javascript">
-        // Mark the tapped card, fade the others, then tell Pepper's dialog which game was chosen.
-        function choose(card, eventName) {
-            if (document.body.className.indexOf("locked") !== -1) { return; }
-            var cards = document.getElementsByClassName("card");
-            for (var i = 0; i < cards.length; i++) {
-                if (cards[i] !== card) { cards[i].className += " fade"; }
-            }
-            card.className += " chosen";
-            document.body.className += " locked";
-            raiseConfirmationEvent(eventName);   // defined in ../js/qievents.js
-        }
-    </script>
+    <script src="../js/gamelist.js"></script>
 </body>
 </html>
