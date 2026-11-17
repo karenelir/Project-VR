@@ -1,0 +1,3 @@
+# Python environment (360 MB, PC-specific: recreate it with the commands in README.md)
+.venv/
+__pycache__/

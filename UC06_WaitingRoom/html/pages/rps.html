@@ -11,8 +11,12 @@
 
     <link rel="stylesheet" type="text/css" href="../css/rps.css">
 </head>
-<body>
-    <button type="button" id="menuButton" onclick="raiseConfirmationEvent('backToGames')">
+<!-- Two ways to play, chosen by the "Rock Paper Scissors Camera" box when the page reports it is ready:
+     mode-camera  the guest shows a real hand to Pepper's camera; this page only displays what Pepper sends
+     mode-touch   no hand-shape server is connected, so the guest taps a move (the original game)
+     mode-wait    until Pepper has answered -->
+<body class="mode-wait">
+    <button type="button" id="menuButton" onclick="leave()">
         <svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11 L12 4 L21 11 M5 10 V20 H19 V10"/></svg>
     </button>
 
@@ -31,14 +35,24 @@
                 <div class="side">
                     <div class="label">You</div>
                     <div class="box" id="youBox"><svg viewBox="0 0 100 100" fill="none" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"></svg></div>
+                    <div class="move" id="youMove"></div>
                 </div>
-                <div class="vs">VS</div>
+                <div class="vs" id="center">VS</div>
                 <div class="side">
                     <div class="label">Pepper</div>
                     <div class="box" id="pepBox"><svg viewBox="0 0 100 100" fill="none" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"></svg></div>
+                    <div class="move" id="pepMove"></div>
                 </div>
             </div>
             <div class="result-text" id="resultText"></div>
+
+            <div class="waiting">Getting Pepper's eyes ready...</div>
+
+            <div class="camera-hint">
+                <div class="hint">Hold your hand up in front of Pepper's eyes. Show your move on <b>Shoot!</b></div>
+                <div class="live" id="live">Pepper sees: <span id="liveShape">no hand yet</span></div>
+            </div>
+
             <div class="choices">
                 <button type="button" class="choice" id="rockChoice" onclick="play('rock')">
                     <svg viewBox="0 0 100 100" fill="none" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"><circle cx="50" cy="50" r="28"/></svg>
@@ -54,10 +68,16 @@
             </div>
         </div>
 
+        <div id="pepReveal">
+            <div class="title">Pepper chose</div>
+            <div class="big"><svg viewBox="0 0 100 100" fill="none" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"></svg></div>
+            <div class="name" id="pepRevealName"></div>
+        </div>
+
         <div class="final" id="finalScreen">
             <h2 id="finalTitle">You Win!</h2>
             <p id="finalSub">2 rounds to 1.</p>
-            <button type="button" id="playAgainButton" onclick="resetGame()">Play Again</button>
+            <button type="button" id="playAgainButton" onclick="playAgain()">Play Again</button>
         </div>
     </div>
 

@@ -5,21 +5,30 @@ language: enu
 # session and keeps reacting to tablet taps and voice, looping between
 # screens until staff stops the behavior when the guest's booking starts.
 # $launchGame=<page> shows html/pages/<page>.html via the "Show Web View (game)" box.
+# It comes first in each rule, so the new screen is already up when Pepper starts talking.
 
 # Main menu
-u:(e:playSelected) Let's play! $launchGame=games
-u:(e:photoSelected) Let's take a photo together! $launchGame=photo
-u:(["play a game" "let us play" "I want to play"]) Let's play! $launchGame=games
-u:(["take a photo" "take a picture" "take a selfie"]) Let's take a photo together! $launchGame=photo
+u:(e:playSelected) $launchGame=games Let's play!
+u:(e:photoSelected) $launchGame=photo Let's take a photo together!
+u:(["play a game" "let us play" "I want to play"]) $launchGame=games Let's play!
+u:(["take a photo" "take a picture" "take a selfie"]) $launchGame=photo Let's take a photo together!
 
-u:(e:backToHub) $launchGame=hub
-u:(e:backToGames) $launchGame=games
+# Leaving a page also ends a camera Rock Paper Scissors match, if one is running.
+u:(e:backToHub) $playRps=stop $launchGame=hub
+u:(e:backToGames) $playRps=stop $launchGame=games
 
 # Games menu
-u:(e:rpsSelected) Rock paper scissors! \pau=300\ Let's play. $launchGame=rps
-u:(e:moleSelected) Whack a mole time! \pau=300\ Get ready. $launchGame=mole
-u:(e:memorySelected) Memory match! \pau=300\ Good luck. $launchGame=memory
-u:(e:tttSelected) Tic tac toe! $launchGame=ttt
+u:(e:rpsSelected) $launchGame=rps
+u:(e:moleSelected) $launchGame=mole Whack a mole time! \pau=300\ Get ready.
+u:(e:memorySelected) $launchGame=memory Memory match! \pau=300\ Good luck.
+u:(e:tttSelected) $launchGame=ttt Tic tac toe!
+
+# Camera Rock Paper Scissors. rps.html raises rpsPageReady once it is loaded and listening (and again
+# for "Play Again"); $playRps=start then runs a match in the "Rock Paper Scissors Camera" box. That box
+# speaks the instructions and the countdown itself, watches the guest's hand through the camera with
+# the help of the hand-shape server on a PC, and raises the rpsRound... / rpsFinal... events below.
+# With no server connected it tells the page to fall back to tap-to-play, which raises the same events.
+u:(e:rpsPageReady) $playRps=start
 
 # Game reactions use Pepper's built-in animations (names checked against the robot's installed list).
 # ^start(anim) ... ^wait(anim) plays the move while speaking and lets it finish: used for the big
@@ -33,6 +42,11 @@ u:(e:tttSelected) Tic tac toe! $launchGame=ttt
 u:(e:rpsRoundTie) ^start(animations/Stand/Gestures/Surprised_1) ^rand["Ooh, a tie!" "Same move! Again!" "Great minds think alike!"]
 u:(e:rpsRoundWin) ^start(animations/Stand/Gestures/Desperate_1) ^rand["Oh no, you got me!" "Hey! Lucky shot." "Ouch!"]
 u:(e:rpsRoundLose) ^start(animations/Stand/Emotions/Positive/Mocker_1) ^rand["Ha, gotcha!" "One point for me!" "Too easy!"]
+# Camera Rock Paper Scissors: the same per-round lines, but with no gesture at all (^mode(disabled)),
+# so Pepper's head stays still and the camera keeps the guest's hand in view during the match.
+u:(e:rpsCamRoundTie) ^mode(disabled) ^rand["Ooh, a tie!" "Same move! Again!" "Great minds think alike!"]
+u:(e:rpsCamRoundWin) ^mode(disabled) ^rand["Oh no, you got me!" "Hey! Lucky shot." "Ouch!"]
+u:(e:rpsCamRoundLose) ^mode(disabled) ^rand["Ha, gotcha!" "One point for me!" "Too easy!"]
 u:(e:rpsFinalWin) ^start(animations/Stand/Emotions/Negative/Frustrated_1) ^rand["Nooo! You beat me!" "I can't believe it, you win!"] \pau=300\ Well played. ^wait(animations/Stand/Emotions/Negative/Frustrated_1)
 u:(e:rpsFinalLose) ^start(animations/Stand/Emotions/Positive/Winner_1) Victory is mine! ^wait(animations/Stand/Emotions/Positive/Winner_1) ^start(animations/Stand/Emotions/Positive/Laugh_1) \vct=120\ Ha ha ha! \vct=100\ ^wait(animations/Stand/Emotions/Positive/Laugh_1)
 

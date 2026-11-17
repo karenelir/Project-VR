@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8" ?><ChoregrapheProject xmlns="http://www.aldebaran-robotics.com/schema/choregraphe/project.xsd" xar_version="3"><Box name="root" id="-1" localization="8" tooltip="Root box of Choregraphe&apos;s behavior. Highest level possible." x="0" y="0"><bitmap>media/images/box/root.png</bitmap><script language="4"><content><![CDATA[]]></content></script><Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="Signal sent when diagram is loaded." id="1" /><Input name="onStart" type="1" type_size="1" nature="2" inner="0" tooltip="Box behavior starts when a signal is received on this input." id="2" /><Input name="onStop" type="1" type_size="1" nature="3" inner="0" tooltip="Box behavior stops when a signal is received on this input." id="3" /><Output name="onStopped" type="1" type_size="1" nature="1" inner="0" tooltip="Signal sent when box behavior is finished." id="4" /><Timeline enable="0"><BehaviorLayer name="behavior_layer1"><BehaviorKeyframe name="keyframe1" index="1"><Diagram scale="70.7107"><Box name="Intro" id="1" localization="8" tooltip="Say some text with animations. The text can be localized." x="150" y="60"><bitmap>media/images/box/interaction/say.png</bitmap><script language="4"><content><![CDATA[import time
+<?xml version="1.0" encoding="UTF-8" ?><ChoregrapheProject xmlns="http://www.aldebaran-robotics.com/schema/choregraphe/project.xsd" xar_version="3"><Box name="root" id="-1" localization="8" tooltip="Root box of Choregraphe&apos;s behavior. Highest level possible." x="0" y="0"><bitmap>media/images/box/root.png</bitmap><script language="4"><content><![CDATA[]]></content></script><Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="Signal sent when diagram is loaded." id="1" /><Input name="onStart" type="1" type_size="1" nature="2" inner="0" tooltip="Box behavior starts when a signal is received on this input." id="2" /><Input name="onStop" type="1" type_size="1" nature="3" inner="0" tooltip="Box behavior stops when a signal is received on this input." id="3" /><Output name="onStopped" type="1" type_size="1" nature="1" inner="0" tooltip="Signal sent when box behavior is finished." id="4" /><Timeline enable="0"><BehaviorLayer name="behavior_layer1"><BehaviorKeyframe name="keyframe1" index="1"><Diagram scale="70.7107"><Box name="Intro" id="1" localization="8" tooltip="Say some text with animations. The text can be localized." x="292" y="45"><bitmap>media/images/box/interaction/say.png</bitmap><script language="4"><content><![CDATA[import time
 
 class MyClass(GeneratedClass):
     def __init__(self):
@@ -43,7 +43,7 @@ class MyClass(GeneratedClass):
                 self.bIsRunning = False
 
     def onInput_onStop(self):
-        self.onUnload()]]></content></script><Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="Signal sent when Diagram is loaded." id="1" /><Input name="onStart" type="1" type_size="1" nature="2" inner="0" tooltip="Box behavior starts when a signal is received on this Input." id="2" /><Input name="onStop" type="1" type_size="1" nature="3" inner="0" tooltip="Box behavior stops when a signal is received on this Input." id="3" /><Output name="onStopped" type="1" type_size="1" nature="1" inner="0" tooltip="Signal sent when Box behavior is finished." id="4" /><Parameter name="Voice shaping (%)" inherits_from_parent="1" content_type="1" value="100" default_value="100" min="50" max="150" tooltip="Voice shaping" id="5" /><Parameter name="Speed (%)" inherits_from_parent="1" content_type="1" value="100" default_value="100" min="50" max="200" tooltip="Voice speed" id="6" /><Parameter name="Text" inherits_from_parent="0" content_type="5" value="Hi there! \pau=400\ While you wait, you can play a game, \pau=200\ or take a photo with me." default_value="" tooltip="The text you want to say. Don&apos;t forget to translate it!" id="7" /><Parameter name="Speaking movement mode" inherits_from_parent="0" content_type="3" value="contextual" default_value="contextual" custom_choice="0" tooltip="Change the body language mode during the speech." id="8"><Choice value="disabled" /><Choice value="random" /><Choice value="contextual" /></Parameter><Parameter name="Animation" inherits_from_parent="0" content_type="3" value="Stand/Gestures/Hey_6" default_value="" custom_choice="0" tooltip="The animation to play" id="9" /></Box><Box name="Show Web View (hub)" id="2" localization="8" tooltip="Shows the webview (html content) on the tablet.&#x0A;&#x0A;V1.0.0&#x0A;" x="420" y="60"><bitmap>media/images/box/internet/internet.png</bitmap><script language="4"><content><![CDATA[import time
+        self.onUnload()]]></content></script><Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="Signal sent when Diagram is loaded." id="1" /><Input name="onStart" type="1" type_size="1" nature="2" inner="0" tooltip="Box behavior starts when a signal is received on this Input." id="2" /><Input name="onStop" type="1" type_size="1" nature="3" inner="0" tooltip="Box behavior stops when a signal is received on this Input." id="3" /><Output name="onStopped" type="1" type_size="1" nature="1" inner="0" tooltip="Signal sent when Box behavior is finished." id="4" /><Parameter name="Voice shaping (%)" inherits_from_parent="1" content_type="1" value="100" default_value="100" min="50" max="150" tooltip="Voice shaping" id="5" /><Parameter name="Speed (%)" inherits_from_parent="1" content_type="1" value="100" default_value="100" min="50" max="200" tooltip="Voice speed" id="6" /><Parameter name="Text" inherits_from_parent="0" content_type="5" value="Hi there! \pau=400\ While you wait, you can play a game, \pau=200\ or take a photo with me." default_value="" tooltip="The text you want to say. Don&apos;t forget to translate it!" id="7" /><Parameter name="Speaking movement mode" inherits_from_parent="0" content_type="3" value="contextual" default_value="contextual" custom_choice="0" tooltip="Change the body language mode during the speech." id="8"><Choice value="disabled" /><Choice value="random" /><Choice value="contextual" /></Parameter><Parameter name="Animation" inherits_from_parent="0" content_type="3" value="Stand/Gestures/Hey_6" default_value="" custom_choice="0" tooltip="The animation to play" id="9" /></Box><Box name="Show Web View (hub)" id="2" localization="8" tooltip="Shows the webview (html content) on the tablet.&#x0A;&#x0A;V1.0.0&#x0A;" x="108" y="157"><bitmap>media/images/box/internet/internet.png</bitmap><script language="4"><content><![CDATA[import time
 class MyClass(GeneratedClass):
     def __init__(self):
         GeneratedClass.__init__(self)
@@ -86,7 +86,7 @@ class MyClass(GeneratedClass):
         except Exception as e:
             self.logger.error("Tablet error: " + str(e))
 
-        self.onStopped()]]></content></script><Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="Signal sent when diagram is loaded." id="1" /><Input name="onStart" type="1" type_size="1" nature="2" inner="0" tooltip="Box behavior starts when a signal is received on this input." id="2" /><Output name="onStopped" type="1" type_size="1" nature="1" inner="0" tooltip="Signal sent when box behavior is finished." id="3" /></Box><Box name="hub_d" id="3" localization="8" tooltip="" x="650" y="60"><dialogFile>../hub_d/hub_d.dlg</dialogFile><bitmap>media/images/box/box-dialog.png</bitmap><script language="4"><content><![CDATA[]]></content></script><Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="Signal sent when diagram is loaded." id="1" /><Input name="onStart" type="1" type_size="1" nature="2" inner="0" tooltip="Box behavior starts when a signal is received on this input." id="2" /><Input name="onStop" type="1" type_size="1" nature="3" inner="0" tooltip="Box behavior stops when a signal is received on this input." id="3" /><Output name="onStopped" type="1" type_size="1" nature="1" inner="0" tooltip="Signal sent when box behavior is finished." id="4" /><Output name="launchGame" type="3" type_size="1" nature="2" inner="0" tooltip="" id="5" /><Output name="takePhoto" type="3" type_size="1" nature="2" inner="0" tooltip="" id="6" /></Box><Box name="Show Web View (game)" id="4" localization="8" tooltip="This box contains a basic python script and can be used to create any python script box you would like.&#x0A;&#x0A;To edit its script, double-click on it." x="880" y="60"><bitmap>media/images/box/box-python-script.png</bitmap><script language="4"><content><![CDATA[import time
+        self.onStopped()]]></content></script><Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="Signal sent when diagram is loaded." id="1" /><Input name="onStart" type="1" type_size="1" nature="2" inner="0" tooltip="Box behavior starts when a signal is received on this input." id="2" /><Output name="onStopped" type="1" type_size="1" nature="1" inner="0" tooltip="Signal sent when box behavior is finished." id="3" /></Box><Box name="hub_d" id="3" localization="8" tooltip="" x="650" y="60"><dialogFile>../hub_d/hub_d.dlg</dialogFile><bitmap>media/images/box/box-dialog.png</bitmap><script language="4"><content><![CDATA[]]></content></script><Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="Signal sent when diagram is loaded." id="1" /><Input name="onStart" type="1" type_size="1" nature="2" inner="0" tooltip="Box behavior starts when a signal is received on this input." id="2" /><Input name="onStop" type="1" type_size="1" nature="3" inner="0" tooltip="Box behavior stops when a signal is received on this input." id="3" /><Output name="onStopped" type="1" type_size="1" nature="1" inner="0" tooltip="Signal sent when box behavior is finished." id="4" /><Output name="launchGame" type="3" type_size="1" nature="2" inner="0" tooltip="" id="5" /><Output name="takePhoto" type="3" type_size="1" nature="2" inner="0" tooltip="" id="6" /><Output name="playRps" type="3" type_size="1" nature="2" inner="0" tooltip="" id="7" /></Box><Box name="Show Web View (game)" id="4" localization="8" tooltip="This box contains a basic python script and can be used to create any python script box you would like.&#x0A;&#x0A;To edit its script, double-click on it." x="880" y="60"><bitmap>media/images/box/box-python-script.png</bitmap><script language="4"><content><![CDATA[import time
 class MyClass(GeneratedClass):
     def __init__(self):
         GeneratedClass.__init__(self)
@@ -270,4 +270,512 @@ class MyClass(GeneratedClass):
         except Exception as e:
             self._unfreeze()
             self.logger.error("Take Photo error: " + str(e))
-            memory.raiseEvent("photoFailed", str(e))]]></content></script><Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="Signal sent when diagram is loaded." id="1" /><Input name="onStart" type="3" type_size="1" nature="2" inner="0" tooltip="Box behavior starts when a signal is received on this input." id="2" /><Input name="onStop" type="1" type_size="1" nature="3" inner="0" tooltip="Box behavior stops when a signal is received on this input." id="3" /><Output name="onStopped" type="1" type_size="1" nature="1" inner="0" tooltip="Signal sent when box behavior is finished." id="4" /></Box><Link inputowner="1" indexofinput="2" outputowner="0" indexofoutput="2" /><Link inputowner="2" indexofinput="2" outputowner="1" indexofoutput="4" /><Link inputowner="3" indexofinput="2" outputowner="2" indexofoutput="3" /><Link inputowner="4" indexofinput="2" outputowner="3" indexofoutput="5" /><Link inputowner="5" indexofinput="2" outputowner="3" indexofoutput="6" /></Diagram></BehaviorKeyframe></BehaviorLayer></Timeline></Box></ChoregrapheProject>
+            memory.raiseEvent("photoFailed", str(e))]]></content></script><Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="Signal sent when diagram is loaded." id="1" /><Input name="onStart" type="3" type_size="1" nature="2" inner="0" tooltip="Box behavior starts when a signal is received on this input." id="2" /><Input name="onStop" type="1" type_size="1" nature="3" inner="0" tooltip="Box behavior stops when a signal is received on this input." id="3" /><Output name="onStopped" type="1" type_size="1" nature="1" inner="0" tooltip="Signal sent when box behavior is finished." id="4" /></Box><Box name="Rock Paper Scissors Camera" id="6" localization="8" tooltip='Camera Rock Paper Scissors: streams compressed camera frames to the hand-shape server on a PC (UC06_RPS_Server) and runs the match. Input: &quot;start&quot; or &quot;stop&quot;.' x="880" y="340"><bitmap>media/images/box/box-python-script.png</bitmap><script language="4"><content><![CDATA[import time
+import zlib
+import socket
+import struct
+import random
+import threading
+
+try:
+    ALProxy
+except NameError:
+    try:
+        from naoqi import ALProxy
+    except ImportError:
+        ALProxy = None
+
+class MyClass(GeneratedClass):
+    # Camera Rock Paper Scissors. Pepper streams compressed camera frames to a hand-shape server
+    # on a PC (UC06_RPS_Server/rps_server.py), which answers each frame with what the hand shows.
+    # This box runs the game: countdown, a vote over the frames after "Shoot!", score, and the
+    # events that drive the tablet page (rpsTablet) and hub_d's reactions (rpsRound... / rpsFinal...).
+    #
+    # The PC connects to this box (not the other way round), so the behavior never needs the PC's
+    # address. With no PC connected, the tablet falls back to its tap-to-play version.
+    #
+    # Wire format - keep in step with UC06_RPS_Server/protocol.py:
+    HELLO = b"RPS1"
+    FRAME_HEADER = struct.Struct("!BIHHI")   # format, frame number, width, height, payload bytes
+    RESULT = struct.Struct("!IBB")           # frame number, label code, confidence 0..100
+    FMT_JPEG, FMT_ZLIB_BGR = 1, 2
+    LABELS = ("none", "rock", "paper", "scissors", "unknown", "skipped")
+
+    SHAPES = ("rock", "paper", "scissors")
+    BEATS = {"rock": "scissors", "paper": "rock", "scissors": "paper"}
+    WINS_NEEDED = 2          # best of three
+    CAPTURE_SECONDS = 1.3    # longest time after "Shoot!" that frames are collected
+    QUICK_SECONDS = 0.7      # ...but stop from here on, as soon as the newest frames agree almost fully
+    VOTE_FRAMES = 20         # only the newest frames vote (about 0.7 s): a guest who opens the hand late still counts
+    SETTLED_SECONDS = 1.0    # the vote needs answers for frames taken at least this long after "Shoot!"...
+    LAG_SECONDS = 2.5        # ...and waits up to this much longer for them if the server falls behind
+    MIN_VOTES = 3            # frames that must show a shape for the round to count
+    MIN_SHARE = 0.6          # share of those frames that must agree
+    QUICK_VOTES = 12         # agreeing frames needed to stop early
+    SHOW_BOTH_SECONDS = 1.5  # pause after each round's reaction so both moves stay on the tablet
+    MAX_MISSES = 3           # rounds in a row without a visible hand before switching to tap-to-play
+    MAX_FREEZE_SECONDS = 180 # never stay frozen longer than this
+    # Where the head points during a match: straight ahead, tilted up by the box parameter
+    # "Head tilt up (degrees)". Pepper is shorter than most guests, so a level camera sees their chest;
+    # following their face instead would aim at the ceiling. HeadPitch is negative when looking up.
+    HEAD_YAW = 0.0
+    DEFAULT_TILT_UP_DEGREES = 12
+    # Autonomous movements that would turn or blur the camera. Paused for the whole match.
+    MOVEMENT_SERVICES = ("ALBasicAwareness", "ALBackgroundMovement", "ALListeningMovement", "ALSpeakingMovement")
+    RESOLUTIONS = {"320x240 (fastest)": 1, "640x480 (sharper, about 10 frames per second)": 2}
+    TOP_CAMERA, BGR, CAMERA_FPS = 0, 13, 30
+
+    def __init__(self):
+        GeneratedClass.__init__(self)
+        self.alive = False
+        self.listener = None
+        self.server = None
+        self.game = None
+        self.frozen = None
+        self.freezeTimer = None
+
+    def onLoad(self):
+        self.alive = True
+        self.lock = threading.Lock()
+        self.stopGame = threading.Event()
+        self.stopGame.set()
+        self.server = None       # socket of the connected hand-shape server, or None
+        self.results = {}        # frame number -> (label, confidence)
+        self.frameNumber = 0
+        self.liveLabel, self.liveCount, self.liveSent = None, 0, None
+        try:
+            import cv2
+            import numpy
+            self.cv2, self.numpy = cv2, numpy
+        except ImportError:
+            self.cv2 = self.numpy = None   # frames are then zlib-compressed instead of JPEG
+        try:
+            self.listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.listener.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            self.listener.bind(("", int(self.getParameter("Port"))))
+            self.listener.listen(1)
+            self.listener.settimeout(1.0)
+            self._thread(self._acceptLoop, self.listener)
+        except Exception as e:
+            self.listener = None
+            self.logger.warning("Rock Paper Scissors camera: could not open the port, tablet play only: " + str(e))
+
+    def onUnload(self):
+        self.alive = False
+        self._stopGame()
+        self._unfreeze()
+        with self.lock:
+            server, self.server = self.server, None
+            listener, self.listener = self.listener, None
+        for s in (server, listener):
+            try:
+                if s:
+                    s.close()
+            except Exception:
+                pass
+
+    # --- input: "start" (the tablet page is ready, play a match) or "stop" (the guest left) ---
+
+    def onInput_onStart(self, command):
+        self._stopGame()
+        if command == "start":
+            self.stopGame.clear()
+            self.game = self._thread(self._play)
+
+    def onInput_onStop(self):
+        self.onUnload()
+
+    def _thread(self, target, *args):
+        t = threading.Thread(target=target, args=args)
+        t.daemon = True
+        t.start()
+        return t
+
+    def _stopGame(self):
+        self.stopGame.set()
+        game, self.game = self.game, None
+        if game and game is not threading.current_thread():
+            game.join(8.0)
+
+    # --- connection to the hand-shape server ----------------------------------
+
+    def _acceptLoop(self, listener):
+        while self.alive:
+            try:
+                conn, address = listener.accept()
+            except socket.timeout:
+                continue
+            except Exception:
+                return   # the listener was closed
+            try:
+                conn.settimeout(3.0)
+                if self._receive(conn, len(self.HELLO)) != self.HELLO:
+                    raise ValueError("not a Rock Paper Scissors server")
+                conn.settimeout(None)
+                conn.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)   # send each frame at once
+            except Exception as e:
+                self.logger.warning("Rock Paper Scissors camera: refused a connection from %s: %s" % (address[0], e))
+                conn.close()
+                continue
+            with self.lock:
+                busy = self.server is not None
+                if not busy:
+                    self.server = conn
+            if busy:
+                # Keep the server that is already connected. (A server that was closed or crashed is
+                # noticed and dropped at once, so a restarted one is never locked out.)
+                self.logger.warning("Rock Paper Scissors camera: a second hand-shape server from %s was turned away; "
+                                    "only one can be connected" % address[0])
+                conn.close()
+                continue
+            self.logger.info("Rock Paper Scissors camera: hand-shape server connected from " + address[0])
+            self._thread(self._resultLoop, conn)
+
+    def _receive(self, conn, count):
+        data = b""
+        while len(data) < count:
+            chunk = conn.recv(count - len(data))
+            if not chunk:
+                raise EOFError("connection closed")
+            data += chunk
+        return data
+
+    def _resultLoop(self, conn):
+        try:
+            while self.alive:
+                number, code, confidence = self.RESULT.unpack(self._receive(conn, self.RESULT.size))
+                label = self.LABELS[code] if code < len(self.LABELS) else "unknown"
+                if label == "skipped":
+                    continue
+                with self.lock:
+                    self.results[number] = (label, confidence)
+                self._showLive(label)
+        except Exception:
+            pass
+        with self.lock:
+            lost = self.server is conn
+            if lost:
+                self.server = None
+        if lost and self.alive:
+            self.logger.info("Rock Paper Scissors camera: hand-shape server disconnected")
+        try:
+            conn.close()
+        except Exception:
+            pass
+
+    def _showLive(self, label):
+        # Tell the tablet what Pepper currently sees, once it has been the same for three frames.
+        if label not in self.SHAPES:
+            label = "none"
+        if label != self.liveLabel:
+            self.liveLabel, self.liveCount = label, 1
+            return
+        self.liveCount += 1
+        if self.liveCount == 3 and label != self.liveSent and not self.stopGame.is_set():
+            self.liveSent = label
+            self._tablet("live|" + label)
+
+    # --- camera stream ----------------------------------------------------------
+
+    def _compress(self, image):
+        width, height, pixels = image[0], image[1], image[6]
+        if self.cv2 is not None:
+            picture = self.numpy.frombuffer(pixels, self.numpy.uint8).reshape(height, width, 3)
+            ok, jpeg = self.cv2.imencode(".jpg", picture, [1, int(self.getParameter("JPEG quality"))])   # 1 = JPEG quality
+            if ok:
+                # numpy on the robot is too old for tobytes(), newer ones no longer have tostring()
+                return self.FMT_JPEG, width, height, jpeg.tobytes() if hasattr(jpeg, "tobytes") else jpeg.tostring()
+        return self.FMT_ZLIB_BGR, width, height, zlib.compress(bytes(pixels), 1)
+
+    def _openCamera(self, resolution):
+        # (video service, subscription handle), or (None, None) if the camera can't be opened.
+        # ALProxy first: getImageRemote through it was measured at about 26 frames per second on Pepper.
+        # The qi service is the fallback.
+        attempts = []
+        try:
+            attempts.append(("ALProxy", ALProxy("ALVideoDevice")))
+        except Exception as e:
+            self.logger.warning("Rock Paper Scissors camera: ALProxy(ALVideoDevice) unavailable: %s" % e)
+        try:
+            attempts.append(("qi", self.session().service("ALVideoDevice")))
+        except Exception as e:
+            self.logger.warning("Rock Paper Scissors camera: qi ALVideoDevice unavailable: %s" % e)
+        for kind, video in attempts:
+            handle = None
+            try:
+                handle = video.subscribeCamera("rps_camera", self.TOP_CAMERA, resolution, self.BGR, self.CAMERA_FPS)
+                image = video.getImageRemote(handle)
+                if image is None:
+                    raise Exception("getImageRemote returned nothing")
+                self.logger.info("Rock Paper Scissors camera: camera open through %s (%sx%s)" % (kind, image[0], image[1]))
+                return video, handle
+            except Exception as e:
+                self.logger.warning("Rock Paper Scissors camera: camera through %s failed: %s" % (kind, e))
+                if handle:
+                    try:
+                        video.unsubscribe(handle)
+                    except Exception:
+                        pass
+        self.logger.error("Rock Paper Scissors camera: could not open the camera")
+        return None, None
+
+    def _streamLoop(self, server, streaming):
+        # One thread waits for camera frames, this one compresses and sends them, so that
+        # compressing never makes the camera wait: frames go out at the camera's own rate.
+        resolution = self.RESOLUTIONS.get(self.getParameter("Camera resolution"), 1)
+        video, handle = self._openCamera(resolution)
+        if video is None:
+            streaming.clear()
+            return
+        newest = [None]
+        ready = threading.Condition()
+        problems = {"count": 0, "last": None}
+
+        def capture():
+            while streaming.is_set():
+                try:
+                    image = video.getImageRemote(handle)
+                except Exception as e:
+                    image = None
+                    problems["last"] = "getImageRemote failed: %s" % e
+                if image is None:
+                    problems["count"] += 1
+                    if problems["last"] is None:
+                        problems["last"] = "getImageRemote returned nothing"
+                    time.sleep(0.01)
+                    continue
+                with ready:
+                    newest[0] = image
+                    ready.notify()
+
+        grabber = self._thread(capture)
+        sent, started = 0, time.time()
+        lastFrame = time.time()
+        try:
+            while streaming.is_set():
+                with ready:
+                    if newest[0] is None:
+                        ready.wait(0.2)
+                    image, newest[0] = newest[0], None
+                if image is None:
+                    if time.time() - lastFrame > 2.0:
+                        # Never fail silently: say why the camera gives nothing.
+                        self.logger.warning("Rock Paper Scissors camera: no camera frame for 2 s (%d failed reads, last: %s)"
+                                            % (problems["count"], problems["last"]))
+                        lastFrame = time.time()
+                    continue
+                lastFrame = time.time()
+                fmt, width, height, payload = self._compress(image)
+                self.frameNumber += 1
+                server.sendall(self.FRAME_HEADER.pack(fmt, self.frameNumber, width, height, len(payload)) + payload)
+                sent += 1
+        except Exception as e:
+            if streaming.is_set():
+                self.logger.warning("Rock Paper Scissors camera: stream stopped: " + str(e))
+        finally:
+            streaming.clear()
+            grabber.join(1.0)
+            try:
+                video.unsubscribe(handle)
+            except Exception:
+                pass
+            seconds = max(time.time() - started, 0.001)
+            self.logger.info("Rock Paper Scissors camera: sent %d frames in %.1f s (%.1f frames per second)" % (sent, seconds, sent / seconds))
+
+    # --- holding still ----------------------------------------------------------
+
+    def _freeze(self):
+        if self.frozen is not None:
+            return
+        self.frozen = {}
+        for name in self.MOVEMENT_SERVICES:
+            try:
+                svc = self.session().service(name)
+                self.frozen[name] = svc.isEnabled()
+                svc.setEnabled(False)
+            except Exception as e:
+                self.logger.warning("Could not pause %s: %s" % (name, e))
+        try:
+            motion = self.session().service("ALMotion")
+            self.frozen["breath"] = motion.getBreathEnabled("Body")
+            motion.setBreathEnabled("Body", False)
+        except Exception as e:
+            self.logger.warning("Could not pause breathing: " + str(e))
+        self.freezeTimer = threading.Timer(self.MAX_FREEZE_SECONDS, self._unfreeze)
+        self.freezeTimer.daemon = True
+        self.freezeTimer.start()
+
+    def _aim(self):
+        # Point the camera at where the guest holds a hand. Called before every countdown, because
+        # hub_d's reaction animations move the head.
+        try:
+            try:
+                tilt = float(self.getParameter("Head tilt up (degrees)"))
+            except Exception:
+                tilt = self.DEFAULT_TILT_UP_DEGREES
+            pitch = -max(0.0, min(tilt, 35.0)) * 3.14159265 / 180.0
+            self.session().service("ALMotion").angleInterpolationWithSpeed(["HeadYaw", "HeadPitch"], [self.HEAD_YAW, pitch], 0.25)
+        except Exception as e:
+            self.logger.warning("Rock Paper Scissors camera: could not aim the head: " + str(e))
+
+    def _unfreeze(self):
+        if self.freezeTimer:
+            self.freezeTimer.cancel()
+            self.freezeTimer = None
+        if self.frozen is None:
+            return
+        frozen, self.frozen = self.frozen, None
+        for name, wasEnabled in frozen.items():
+            try:
+                if name == "breath":
+                    self.session().service("ALMotion").setBreathEnabled("Body", wasEnabled)
+                    continue
+                self.session().service(name).setEnabled(wasEnabled)
+            except Exception as e:
+                self.logger.warning("Could not restore %s: %s" % (name, e))
+
+    # --- the game ---------------------------------------------------------------
+
+    def _tablet(self, value):
+        # rps.html listens to this event: mode|camera, mode|touch, live|<shape>, count|<n>, shoot,
+        # nohand, result|<yours>|<mine>|<win/lose/tie>|<your score>|<my score>, final|<win/lose>|<yours>|<mine>
+        try:
+            self.session().service("ALMemory").raiseEvent("rpsTablet", value)
+        except Exception as e:
+            self.logger.warning("Rock Paper Scissors camera: could not reach the tablet: " + str(e))
+
+    def _say(self, text):
+        # Plain text-to-speech (no gestures), so Pepper's head stays still for the camera.
+        if not self.stopGame.is_set():
+            self.session().service("ALTextToSpeech").say(text)
+
+    def _react(self, event):
+        # hub_d answers these events with a line and an animation. Wait until it has finished speaking.
+        memory = self.session().service("ALMemory")
+        memory.raiseEvent(event, 1)
+        self.stopGame.wait(0.7)
+        deadline = time.time() + 7.0
+        while not self.stopGame.is_set() and time.time() < deadline:
+            try:
+                if memory.getData("ALTextToSpeech/TextDone") == 1:
+                    break
+            except Exception:
+                break
+            self.stopGame.wait(0.1)
+        self.stopGame.wait(0.3)
+
+    def _newestAnswer(self):
+        # Number of the newest frame the server has classified (skipped frames don't count).
+        with self.lock:
+            return max(self.results) if self.results else 0
+
+    def _vote(self, firstFrame):
+        # (shape, votes for it, frames that showed any shape) over the newest frames from firstFrame on.
+        with self.lock:
+            answered = sorted((number, label) for number, (label, confidence) in self.results.items() if number >= firstFrame)
+        labels = [label for number, label in answered[-self.VOTE_FRAMES:]]
+        counts = dict((shape, labels.count(shape)) for shape in self.SHAPES)
+        total = sum(counts.values())
+        best = max(self.SHAPES, key=lambda shape: counts[shape])
+        return best, counts[best], total
+
+    def _play(self):
+        with self.lock:
+            server = self.server
+            self.results = {}
+        self.liveLabel, self.liveCount, self.liveSent = None, 0, None
+        if server is None:
+            self.logger.info("Rock Paper Scissors camera: no hand-shape server connected, playing on the tablet")
+            self._tablet("mode|touch")
+            self._say("Rock paper scissors! \\pau=300\\ Tap your move on my tablet.")
+            return
+
+        self._tablet("mode|camera")
+        self._freeze()   # stop following the guest's face: the camera must stay on the hand
+        self._aim()
+        streaming = threading.Event()
+        streaming.set()
+        stream = self._thread(self._streamLoop, server, streaming)
+        try:
+            self._say("Rock paper scissors! \\pau=300\\ Hold your hand up in front of my eyes. \\pau=300\\ Show your move when I say shoot.")
+            yours = mine = misses = 0
+            while not self.stopGame.is_set() and yours < self.WINS_NEEDED and mine < self.WINS_NEEDED:
+                if not streaming.is_set():
+                    self._unfreeze()
+                    self._tablet("mode|touch")
+                    self._say("I lost my camera link. \\pau=300\\ Tap your move on my tablet instead.")
+                    return
+
+                myShape = random.choice(self.SHAPES)   # chosen before Pepper sees the guest's hand
+                with self.lock:
+                    self.results = {}                  # forget the frames of the previous round
+                self._aim()
+                for number, word in ((1, "One"), (2, "Two"), (3, "Three")):
+                    self._tablet("count|%d" % number)
+                    self._say(word)
+                    if self.stopGame.wait(0.15):
+                        return
+                self._tablet("shoot")
+                self._say("Shoot!")
+
+                # Vote over the frames taken after "Shoot!": by then the hand has stopped moving.
+                firstFrame = self.frameNumber + 1
+                shot = time.time()
+                settledFrame = None
+                while time.time() - shot < self.CAPTURE_SECONDS and not self.stopGame.wait(0.05):
+                    if settledFrame is None and time.time() - shot >= self.SETTLED_SECONDS:
+                        settledFrame = self.frameNumber
+                    shape, votes, total = self._vote(firstFrame)
+                    if time.time() - shot >= self.QUICK_SECONDS and votes >= self.QUICK_VOTES and votes >= 0.9 * total:
+                        break
+                # If the PC was busy, the answers for the last frames may still be on their way: wait for
+                # them, so that the vote is not decided by frames from before the hand was shown.
+                if settledFrame is not None:
+                    waitUntil = time.time() + self.LAG_SECONDS
+                    while self._newestAnswer() < settledFrame and time.time() < waitUntil and not self.stopGame.wait(0.05):
+                        pass
+                if self.stopGame.is_set():
+                    return
+                shape, votes, total = self._vote(firstFrame)
+                self.logger.info("Rock Paper Scissors camera: %d of %d frames with a hand show %s" % (votes, total, shape))
+
+                if total < self.MIN_VOTES or votes < self.MIN_SHARE * total:
+                    misses += 1
+                    self._tablet("nohand")
+                    if misses >= self.MAX_MISSES:
+                        streaming.clear()   # the camera is no longer needed: stop sending before speaking
+                        self._unfreeze()
+                        self._tablet("mode|touch")
+                        self._say("I can't see your hand well enough. \\pau=300\\ Let's play on my tablet instead.")
+                        return
+                    self._say("I couldn't see your hand. \\pau=300\\ Hold it up in front of my eyes.")
+                    continue
+                misses = 0
+
+                if shape == myShape:
+                    outcome = "tie"
+                elif self.BEATS[shape] == myShape:
+                    outcome = "win"
+                    yours += 1
+                else:
+                    outcome = "lose"
+                    mine += 1
+                self._tablet("result|%s|%s|%s|%d|%d" % (shape, myShape, outcome, yours, mine))
+                self._say("I chose %s." % myShape)
+                # Movement-free reactions (hub_d: rpsCamRound...), so the head stays on the guest's hand.
+                self._react({"tie": "rpsCamRoundTie", "win": "rpsCamRoundWin", "lose": "rpsCamRoundLose"}[outcome])
+                # The tablet first shows Pepper's move big (1.5 s), then both moves: leave them up a moment.
+                if self.stopGame.wait(self.SHOW_BOTH_SECONDS):
+                    return
+
+            if not self.stopGame.is_set():
+                won = yours > mine
+                self._tablet("final|%s|%d|%d" % ("win" if won else "lose", yours, mine))
+                self.session().service("ALMemory").raiseEvent("rpsFinalWin" if won else "rpsFinalLose", 1)
+        except Exception as e:
+            self.logger.error("Rock Paper Scissors camera error: " + str(e))
+            self._tablet("mode|touch")
+        finally:
+            streaming.clear()
+            stream.join(2.0)
+            self._unfreeze()]]></content></script><Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="Signal sent when diagram is loaded." id="1" /><Input name="onStart" type="3" type_size="1" nature="2" inner="0" tooltip='&quot;start&quot; plays a match, &quot;stop&quot; ends it.' id="2" /><Input name="onStop" type="1" type_size="1" nature="3" inner="0" tooltip="Box behavior stops when a signal is received on this input." id="3" /><Output name="onStopped" type="1" type_size="1" nature="1" inner="0" tooltip="Signal sent when box behavior is finished." id="4" /><Parameter name="Port" inherits_from_parent="0" content_type="1" value="5065" default_value="5065" min="1024" max="65535" tooltip="Port the hand-shape server on the PC connects to (rps_server.py --port)." id="5" /><Parameter name="Camera resolution" inherits_from_parent="0" content_type="3" value="320x240 (fastest)" default_value="320x240 (fastest)" custom_choice="0" tooltip="320x240 reaches about 30 frames per second on Pepper, 640x480 about 10." id="6"><Choice value="320x240 (fastest)" /><Choice value="640x480 (sharper, about 10 frames per second)" /></Parameter><Parameter name="JPEG quality" inherits_from_parent="0" content_type="1" value="75" default_value="75" min="30" max="95" tooltip="Higher = sharper frames but more data to send." id="7" /><Parameter name="Head tilt up (degrees)" inherits_from_parent="0" content_type="1" value="12" default_value="12" min="0" max="35" tooltip="How far Pepper looks up during Rock Paper Scissors, so the camera sees the guest&apos;s raised hand. Raise it if hands are cut off at the top of the picture, lower it if they are cut off at the bottom." id="8" /></Box><Link inputowner="2" indexofinput="2" outputowner="0" indexofoutput="2" /><Link inputowner="1" indexofinput="2" outputowner="2" indexofoutput="3" /><Link inputowner="3" indexofinput="2" outputowner="2" indexofoutput="3" /><Link inputowner="4" indexofinput="2" outputowner="3" indexofoutput="5" /><Link inputowner="5" indexofinput="2" outputowner="3" indexofoutput="6" /><Link inputowner="6" indexofinput="2" outputowner="3" indexofoutput="7" /></Diagram></BehaviorKeyframe></BehaviorLayer></Timeline></Box></ChoregrapheProject>

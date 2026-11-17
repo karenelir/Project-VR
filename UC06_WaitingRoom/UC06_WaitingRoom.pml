@@ -74,10 +74,9 @@
         <File name="fa-solid-900" src="html/webfonts/fa-solid-900.ttf" />
         <File name="fa-solid-900" src="html/webfonts/fa-solid-900.woff" />
         <File name="fa-solid-900" src="html/webfonts/fa-solid-900.woff2" />
-        <File name=".behavior.xar.36972" src="behavior_1/.behavior.xar.36972.csp" />
     </Resources>
     <Topics>
-        <Topic name="hub_d_enu" src="hub_d/hub_d_enu.top" topicName="" language="" />
+        <Topic name="hub_d_enu" src="hub_d/hub_d_enu.top" topicName="hub_d" language="en_US" />
     </Topics>
     <IgnoredPaths />
     <Translations auto-fill="en_US">
