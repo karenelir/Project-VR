@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Your team photo</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="../css/uc05.css">
+    <script src="/libs/qi/2/qi.js"></script>
+    <script src="../js/jquery.js"></script>
+    <script src="../js/qievents.js"></script>
+    <script src="../js/uc05.js"></script>
+    <script src="../js/qrcode.js"></script>
+    <style>
+        .stage { flex-direction: row; }
+        .frame {
+            flex: 0 0 auto; background: #f4f1ff; padding: 1.2vw 1.2vw 5vh 1.2vw;
+            -webkit-transform: rotate(-2.5deg); transform: rotate(-2.5deg);
+            -webkit-box-shadow: 0 1.5vw 4vw rgba(0,0,0,0.6); box-shadow: 0 1.5vw 4vw rgba(0,0,0,0.6);
+            -webkit-animation: drop .7s ease-out both; animation: drop .7s ease-out both;
+        }
+        .frame { position: relative; }
+        .framehat { position: absolute; top: -6.2vw; left: -5.2vw; width: 17vw; z-index: 2;
+                    -webkit-transform: rotate(-24deg); transform: rotate(-24deg); }
+        .frame .pic { width: 44vw; height: 33vw; background: #1a1d2b center / cover no-repeat;
+                      display: flex; align-items: center; justify-content: center; }
+        .frame .pic svg { width: 22%; stroke: #6ee7ff; opacity: .7; }
+        .frame .caption { color: #10131c; font-size: 3.09vw; font-weight: 700; margin-top: 2vh; text-align: center; }
+        .side { padding-left: 3.5vw; text-align: left; max-width: 44vw; }
+        .side h1 { font-size: 4.2vw; margin-bottom: 1vh; }
+        .side .subtitle { margin-bottom: 2.5vh; }
+        .qrbox { display: none; flex-direction: row; align-items: center; margin-bottom: 3vh;
+                 background: rgba(255,255,255,0.06); border: 2px solid rgba(110,231,255,0.35); padding: 1.2vw; }
+        .qrbox.on { display: flex; }
+        #qr { background: #ffffff; padding: 0.6vw; line-height: 0; }
+        #qr img { width: 15vw; height: 15vw; display: block; image-rendering: pixelated; }
+        .qrtext { padding-left: 1.6vw; font-size: 2vw; line-height: 1.35; color: #c3c7de; }
+        .qrtext b { display: block; color: #f4f1ff; font-size: 2.4vw; margin-bottom: 0.6vh; }
+        .actions { display: flex; flex-direction: row; align-items: center; }
+        .actions .btn { margin-right: 1.4vw; text-align: center; }
+        .actions .btn.nav { font-size: 2.2vw; padding: 2.2vh 2.2vw; }
+        .retake { font-size: 2.6vw !important; padding: 2.6vh 2.4vw !important; margin-bottom: 2vh; }
+        .actions .btn.nav { font-size: 2.5vw !important; padding: 2.6vh 2vw !important; margin-right: 1vw; }
+        .side h1 { font-size: 4.4vw !important; }
+        .side .subtitle { font-size: 2.3vw !important; }
+        body.hasqr #sub { display: none; }
+        @-webkit-keyframes drop { 0% { -webkit-transform: translateY(-8vh) rotate(-8deg); opacity: 0; } 100% { -webkit-transform: rotate(-2.5deg); opacity: 1; } }
+        @keyframes drop { 0% { transform: translateY(-8vh) rotate(-8deg); opacity: 0; } 100% { transform: rotate(-2.5deg); opacity: 1; } }
+    </style>
+    <link rel="stylesheet" href="../css/xmas.css">
+</head>
+<!-- UC05 step 4 result. URL parameters: photo (path under ../pics/, e.g. photos/team_123.jpg), game.
+     With no photo (camera not available / simulated prototype) a placeholder is shown instead.
+     qr = link to the photo on Pepper's web server (http://<Pepper Wi-Fi IP>/apps/<app>/pics/photos/...):
+     shown as a QR code next to the photo, phones on the same Wi-Fi can scan it and save the photo.
+     "Retake photo" -> event photoRetake (Pepper deletes it and takes a new one).
+     The photo stays until a button is tapped: Exit -> event photoExit (on to the rating),
+     Back to photo options -> event photoBack ("who takes the photo?" again). -->
+<body>
+    <div class="backdrop" id="backdrop"></div>
+    <div class="backdrop-shade"></div>
+    <div class="stage">
+        <div class="frame">
+            <img class="framehat" src="../pics/xmas/hat.png" alt="">
+            <div class="pic" id="pic">
+                <svg id="placeholder" viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 8 H7 L9 5 H15 L17 8 H21 V19 H3 Z"/><circle cx="12" cy="13" r="3.5"/>
+                </svg>
+            </div>
+            <div class="caption" id="caption">Team photo</div>
+        </div>
+        <div class="side">
+            <span class="kicker">Merry Christmas</span>
+            <h1>Looking festive!</h1>
+            <p class="subtitle" id="sub">A Christmas memory with Pepper.</p>
+            <div class="qrbox" id="qrbox">
+                <div id="qr"></div>
+                <div class="qrtext"><b>Scan to save your photo</b>Your phone must be on the same Wi-Fi as Pepper.</div>
+            </div>
+            <button type="button" class="btn nav nav-back retake" onclick="uc05Choose(this, 'photoRetake', 1)"><svg class="l" viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12 A8 8 0 1 1 17.3 6"/><path d="M20 3.5 V8 H15.5"/></svg>Retake photo</button>
+            <div class="actions">
+                <button type="button" class="btn nav nav-back" onclick="uc05Choose(this, 'photoBack', 1)"><svg class="l" viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12 H5 M11 6 L5 12 L11 18"/></svg>Photo options</button>
+                <button type="button" class="btn nav nav-next" onclick="uc05Choose(this, 'photoExit', 1)">Finish<svg class="r" viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12 H19 M13 6 L19 12 L13 18"/></svg></button>
+            </div>
+        </div>
+    </div>
+    <script type="text/javascript">
+        var photo = uc05Param("photo", "");
+        var game = uc05Param("game", "");
+        uc05SetBackdrop("backdrop", uc05GameArt(game));
+        var d = new Date();
+        document.getElementById("caption").innerHTML = "Merry Christmas &middot; " + d.getFullYear();
+        if (photo) {
+            var img = new Image();
+            img.onload = function () {
+                document.getElementById("pic").style.backgroundImage = "url('" + img.src + "')";
+                document.getElementById("placeholder").style.display = "none";
+            };
+            img.src = "../pics/" + photo;
+        } else {
+            document.getElementById("sub").innerHTML = "Camera simulated in this prototype.";
+        }
+        // QR code next to the photo: link to the photo on Pepper's own web server (same Wi-Fi only)
+        var qrLink = uc05Param("qr", "");
+        if (qrLink && typeof qrcode !== "undefined") {
+            try {
+                var q = qrcode(0, "M");
+                q.addData(qrLink);
+                q.make();
+                document.getElementById("qr").innerHTML = q.createImgTag(6, 0, "QR code");
+                document.getElementById("qrbox").className = "qrbox on";
+                document.body.className += " hasqr";
+            } catch (e) { console.log("QR error: " + e); }
+        }
+    </script>
+    <script src="../js/xmas.js"></script>
+</body>
+</html>
