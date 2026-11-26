@@ -1,7 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 150">
-  <!-- Santa hat for the corner of the photo frame -->
-  <path d="M20 118 C26 64 64 22 112 18 C150 16 176 40 184 76 C170 66 156 66 150 74 L160 116 Z" fill="#d7263d"/>
-  <path d="M112 18 C150 16 176 40 184 76 C170 66 156 66 150 74 C146 50 132 30 112 18 Z" fill="#b01c30"/>
-  <rect x="8" y="104" width="164" height="34" rx="17" fill="#ffffff"/>
-  <circle cx="186" cy="80" r="14" fill="#ffffff"/>
-</svg>
