@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 260">
+  <!-- original cute reindeer -->
+  <ellipse cx="120" cy="250" rx="70" ry="8" fill="#000" opacity=".18"/>
+  <!-- antlers -->
+  <g stroke="#8a5a2b" stroke-width="9" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M92 70 C80 50 70 36 60 14 M74 42 L48 36 M66 26 L80 8"/>
+    <path d="M148 70 C160 50 170 36 180 14 M166 42 L192 36 M174 26 L160 8"/>
+  </g>
+  <!-- body -->
+  <path d="M66 250 C60 196 84 172 120 172 C156 172 180 196 174 250 Z" fill="#a8703f"/>
+  <ellipse cx="120" cy="222" rx="30" ry="26" fill="#e9c9a3"/>
+  <!-- scarf -->
+  <path d="M74 176 C100 190 140 190 166 176 L166 192 C140 206 100 206 74 192 Z" fill="#1f7a3a"/>
+  <rect x="140" y="188" width="16" height="36" rx="4" fill="#1f7a3a"/>
+  <path d="M140 216 H156 M140 206 H156" stroke="#fff" stroke-width="3"/>
+  <!-- ears -->
+  <ellipse cx="66" cy="96" rx="22" ry="11" fill="#a8703f" transform="rotate(-25 66 96)"/>
+  <ellipse cx="174" cy="96" rx="22" ry="11" fill="#a8703f" transform="rotate(25 174 96)"/>
+  <ellipse cx="68" cy="96" rx="12" ry="5" fill="#f2b8a0" transform="rotate(-25 68 96)"/>
+  <ellipse cx="172" cy="96" rx="12" ry="5" fill="#f2b8a0" transform="rotate(25 172 96)"/>
+  <!-- head -->
+  <ellipse cx="120" cy="116" rx="52" ry="56" fill="#b97a44"/>
+  <ellipse cx="120" cy="146" rx="34" ry="26" fill="#e9c9a3"/>
+  <ellipse cx="100" cy="106" rx="9" ry="11" fill="#2b2b2b"/><ellipse cx="140" cy="106" rx="9" ry="11" fill="#2b2b2b"/>
+  <circle cx="103" cy="102" r="3" fill="#fff"/><circle cx="143" cy="102" r="3" fill="#fff"/>
+  <circle cx="86" cy="128" r="8" fill="#ff9aa2" opacity=".7"/><circle cx="154" cy="128" r="8" fill="#ff9aa2" opacity=".7"/>
+  <ellipse cx="120" cy="136" rx="13" ry="10" fill="#4a2d17"/>
+  <path d="M110 154 Q120 162 130 154" stroke="#4a2d17" stroke-width="4" fill="none" stroke-linecap="round"/>
+</svg>

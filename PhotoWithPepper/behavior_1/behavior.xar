@@ -1,0 +1,1155 @@
+<?xml version="1.0" encoding="UTF-8" ?><ChoregrapheProject xmlns="http://www.aldebaran-robotics.com/schema/choregraphe/project.xsd" xar_version="3"><Box name="root" id="-1" localization="8" tooltip="Root box of Choregraphe&apos;s behavior. Highest level possible." x="0" y="0"><bitmap>media/images/box/root.png</bitmap><script language="4"><content><![CDATA[]]></content></script><Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="Signal sent when diagram is loaded." id="1" /><Input name="onStart" type="1" type_size="1" nature="2" inner="0" tooltip="Box behavior starts when a signal is received on this input." id="2" /><Input name="onStop" type="1" type_size="1" nature="3" inner="0" tooltip="Box behavior stops when a signal is received on this input." id="3" /><Output name="onStopped" type="1" type_size="1" nature="1" inner="0" tooltip="Signal sent when box behavior is finished." id="4" /><Timeline enable="0"><BehaviorLayer name="behavior_layer1"><BehaviorKeyframe name="keyframe1" index="1"><Diagram scale="100"><Box name="Init" id="1" localization="8" tooltip="Stand, Christmas eyes, short Jingle Bells." x="40" y="60"><bitmap>media/images/box/box-python-script.png</bitmap><script language="4"><content><![CDATA[class MyClass(GeneratedClass):
+    """UC05 - Init: stand up, neutral white eyes. Basic awareness is kept ON so Pepper keeps
+    looking at the group while celebrating."""
+
+    def __init__(self):
+        GeneratedClass.__init__(self, False)
+
+    def onLoad(self):
+        pass
+
+    def onUnload(self):
+        pass
+
+    def onInput_onStart(self):
+        try:
+            posture = ALProxy("ALRobotPosture")
+            posture.setMaxTryNumber(3)
+            posture.goToPosture("Stand", 0.8)
+        except Exception as e:
+            self.logger.warning("Posture not available: " + str(e))
+        try:
+            leds = ALProxy("ALLeds")
+            leds.fadeRGB("LeftFaceLeds", 0xFF2030, 0.3)      # Christmas eyes: one red, one green
+            leds.fadeRGB("RightFaceLeds", 0x20FF50, 0.3)
+        except Exception as e:
+            self.logger.warning("LEDs not available: " + str(e))
+        try:
+            import os
+            root = os.path.dirname(self.behaviorAbsolutePath())
+            if not os.path.isdir(os.path.join(root, "sounds")):
+                root = "/home/nao/.local/share/PackageManager/apps/" + self.packageUid()
+            ALProxy("ALAudioPlayer").post.playFile(os.path.join(root, "sounds", "jingle_short.ogg"), 0.45, 0.0)
+        except Exception as e:
+            self.logger.warning("Jingle: " + str(e))
+        self.onStopped()
+
+    def onInput_onStop(self):
+        self.onUnload()
+        self.onStopped()]]></content></script><Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="" id="1" /><Input name="onStart" type="1" type_size="1" nature="2" inner="0" tooltip="" id="2" /><Input name="onStop" type="1" type_size="1" nature="3" inner="0" tooltip="" id="3" /><Output name="onStopped" type="1" type_size="1" nature="1" inner="0" tooltip="" id="4" /></Box><Box name="Ask: Christmas photo?" id="2" localization="8" tooltip="Reusable 'Ask on Tablet' box: shows a page, Pepper asks, the first tap or spoken answer fires the matching output." x="240" y="60"><bitmap>media/images/box/box-dialog.png</bitmap><script language="4"><content><![CDATA[import os, time
+import re as _re
+_BS = chr(92)
+def _pauses(text):
+    # half-second pause after every sentence, so long lines are easy to follow
+    text = _re.sub(r"([.!?])\s+" + _re.escape(_BS) + r"pau=[1-4]\d\d" + _re.escape(_BS),
+                   lambda m: m.group(1) + " " + _BS + "pau=500" + _BS, text)
+    return _re.sub(r"([.!?])\s+(?!" + _re.escape(_BS) + r"pau)(?=[A-Z^])",
+                   lambda m: m.group(1) + " " + _BS + "pau=500" + _BS + " ", text)
+
+def _waitForPage(session, page, timeout=2.5):
+    # Wait until the tablet reports (event pageReady) that this page is really on the screen,
+    # so Pepper never talks over the previous screen. Gives up after `timeout` seconds.
+    import time as _t
+    state = {"ready": False}
+    def cb(value):
+        if str(value).split("?")[0] == page:
+            state["ready"] = True
+    sub = link = None
+    try:
+        sub = session.service("ALMemory").subscriber("pageReady")
+        link = sub.signal.connect(cb)
+    except Exception:
+        return None
+    return (sub, link, state, _t.time() + timeout)
+
+def _finishWait(handle):
+    import time as _t
+    if handle is None:
+        return
+    sub, link, state, end = handle
+    while not state["ready"] and _t.time() < end:
+        _t.sleep(0.05)
+    try:
+        sub.signal.disconnect(link)
+    except Exception:
+        pass
+    _t.sleep(0.3)          # let the page settle before talking
+
+class MyClass(GeneratedClass):
+    # Reusable "Ask on Tablet" box.
+    #   Page / Query : page of html/pages/ to show (shown FIRST, so a tap works straight away)
+    #   Say          : what Pepper says (can be interrupted by a tap)
+    #   Taps         : tablet event -> output        e.g.  yesAnswer=yes; noAnswer=no
+    #   Words        : spoken words -> output        e.g.  yes,sure,okay=yes; no,no thanks=no
+    #   Replies      : output -> short answer        e.g.  yes=Awesome!; no=No problem!
+    #   Sound        : optional file in sounds/ played when the box starts
+    #   If nobody answers (s) / Timeout output : what happens when nobody taps or speaks
+    # The box then fires the output with that name. Every tap is kept, even one made while Pepper talks.
+
+    def __init__(self):
+        GeneratedClass.__init__(self, False)
+
+    def onLoad(self):
+        self.answer = None
+        self.stopped = False
+        self.links = []
+        self.asrOn = False
+        self.asrName = "AskOnTablet_%d" % id(self)
+
+    def onUnload(self):
+        self.stopped = True
+        self._cleanup()
+
+    def _pairs(self, text):
+        result = []
+        for part in str(text).split(";"):
+            if "=" in part:
+                left, right = part.split("=", 1)
+                result.append((left.strip(), right.strip()))
+        return result
+
+    def _tap(self, output):
+        def cb(value):
+            if self.answer is None:
+                self.answer = output
+        return cb
+
+    def _word(self, value):
+        try:
+            word, conf = str(value[0]), float(value[1])
+        except Exception:
+            return
+        if self.answer is None and conf >= float(self.getParameter("Voice confidence (0-1)")) and word in self.words:
+            self.answer = self.words[word]
+
+    def _cleanup(self):
+        for (sub, link) in self.links:
+            try:
+                sub.signal.disconnect(link)
+            except Exception:
+                pass
+        self.links = []
+        if self.asrOn:
+            try:
+                ALProxy("ALSpeechRecognition").unsubscribe(self.asrName)
+            except Exception:
+                pass
+            self.asrOn = False
+
+    def _root(self):
+        root = os.path.dirname(self.behaviorAbsolutePath())
+        if os.path.isdir(os.path.join(root, "sounds")):
+            return root
+        return "/home/nao/.local/share/PackageManager/apps/" + self.packageUid()
+
+    def onInput_onStart(self):
+        self.answer = None
+        self.stopped = False
+        self.words = {}
+        for (words, output) in self._pairs(self.getParameter("Words")):
+            for w in words.split(","):
+                if w.strip():
+                    self.words[w.strip()] = output
+        replies = dict(self._pairs(self.getParameter("Replies")))
+
+        memory = self.session().service("ALMemory")
+        for (event, output) in self._pairs(self.getParameter("Taps")):
+            try:
+                sub = memory.subscriber(event)
+                self.links.append((sub, sub.signal.connect(self._tap(output))))
+            except Exception as e:
+                self.logger.warning("Cannot subscribe to %s: %s" % (event, str(e)))
+        hasTablet = True
+        waiting = _waitForPage(self.session(), self.getParameter("Page"))
+        try:
+            tablet = self.session().service("ALTabletService")
+            query = self.getParameter("Query")
+            tablet.showWebview("http://198.18.0.1/apps/%s/pages/%s?%s%st=%d" % (
+                self.packageUid(), self.getParameter("Page"), query, "&" if query else "", int(time.time())))
+        except Exception as e:
+            hasTablet = False
+            waiting = None
+            self.logger.warning("No tablet: " + str(e))
+        _finishWait(waiting)                 # Pepper only talks once the page is on the screen
+
+        sound = str(self.getParameter("Sound")).strip()
+        if sound:
+            try:
+                ALProxy("ALAudioPlayer").post.playFile(os.path.join(self._root(), "sounds", sound), 0.45, 0.0)
+            except Exception as e:
+                self.logger.warning("Sound: " + str(e))
+        speech = speechId = None
+        try:
+            speech = ALProxy("ALAnimatedSpeech")
+            speechId = speech.post.say(_pauses(self.getParameter("Say")), {"bodyLanguageMode": "contextual"})
+        except Exception as e:
+            self.logger.warning("Speech: " + str(e))
+        # While Pepper talks only taps count: the microphone must not hear Pepper's own "yes or no".
+        while speechId is not None and self.answer is None and not self.stopped:
+            try:
+                if not speech.isRunning(speechId):
+                    break
+            except Exception:
+                break
+            time.sleep(0.05)
+        if self.words and self.answer is None and not self.stopped:
+            try:
+                asr = ALProxy("ALSpeechRecognition")
+                try:
+                    asr.pause(True)
+                except Exception:
+                    pass
+                asr.setLanguage("English")
+                asr.setVocabulary(list(self.words.keys()), False)
+                try:
+                    asr.pause(False)
+                except Exception:
+                    pass
+                sub = memory.subscriber("WordRecognized")
+                self.links.append((sub, sub.signal.connect(self._word)))
+                asr.subscribe(self.asrName)
+                self.asrOn = True
+            except Exception as e:
+                self.logger.warning("Voice not available, tablet only: " + str(e))
+
+        wait = int(self.getParameter("If nobody answers (s)"))
+        if not hasTablet:
+            wait = min(wait, 5)       # virtual robot: nobody can tap, use the timeout output quickly
+        end = time.time() + wait
+        while self.answer is None and not self.stopped and time.time() < end:
+            time.sleep(0.05)
+        self._cleanup()
+        cut = False
+        try:
+            if speechId is not None and speech.isRunning(speechId):
+                cut = True
+        except Exception:
+            pass
+        try:
+            ALProxy("ALTextToSpeech").stopAll()      # a tap cuts Pepper's sentence
+        except Exception:
+            pass
+        if cut:
+            try:
+                ALProxy("ALRobotPosture").goToPosture("Stand", 0.6)   # arms back down if a gesture was cut
+            except Exception:
+                pass
+        if self.stopped:
+            return
+        answer = self.answer or self.getParameter("Timeout output")
+        self.logger.info("%s -> %s" % (self.getParameter("Page"), answer))
+        if self.answer is not None and sound:
+            try:
+                ALProxy("ALAudioPlayer").stopAll()      # someone answered: stop the music
+            except Exception:
+                pass
+        if answer in replies and replies[answer]:
+            try:
+                ALProxy("ALAnimatedSpeech").say(_pauses(replies[answer]), {"bodyLanguageMode": "contextual"})
+            except Exception:
+                pass
+        getattr(self, answer)()
+
+    def onInput_onStop(self):
+        self.stopped = True]]></content></script><Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="" id="1" /><Input name="onStart" type="1" type_size="1" nature="2" inner="0" tooltip="" id="2" /><Input name="onStop" type="1" type_size="1" nature="3" inner="0" tooltip="" id="3" /><Output name="yes" type="1" type_size="1" nature="2" inner="0" tooltip="" id="4" /><Output name="no" type="1" type_size="1" nature="2" inner="0" tooltip="" id="5" /><Output name="tablet" type="1" type_size="1" nature="2" inner="0" tooltip="" id="6" /><Output name="selfie" type="1" type_size="1" nature="2" inner="0" tooltip="" id="7" /><Parameter name="Page" inherits_from_parent="0" content_type="3" value="photoask.html" default_value="photoask.html" custom_choice="0" tooltip="Page in html/pages/." id="8" /><Parameter name="Query" inherits_from_parent="0" content_type="3" value="" default_value="" custom_choice="0" tooltip="URL parameters for the page." id="9" /><Parameter name="Say" inherits_from_parent="0" content_type="3" value="Choose yes or no! Do you want a Christmas photo with me? Tap a big button on my tablet, or just tell me. Ho ho ho!" default_value="Choose yes or no! Do you want a Christmas photo with me? Tap a big button on my tablet, or just tell me. Ho ho ho!" custom_choice="0" tooltip="What Pepper says (a tap interrupts it)." id="10" /><Parameter name="Taps" inherits_from_parent="0" content_type="3" value="yesAnswer=yes; noAnswer=no" default_value="yesAnswer=yes; noAnswer=no" custom_choice="0" tooltip="tablet event=output; ..." id="11" /><Parameter name="Words" inherits_from_parent="0" content_type="3" value="yes,yeah,sure,okay,yes please,of course,let's do it=yes; no,nope,no thanks,not now,maybe later=no; selfie,a selfie,pose,strike a pose=selfie; you take it,take it yourself,you take the photo=tablet" default_value="yes,yeah,sure,okay,yes please,of course,let's do it=yes; no,nope,no thanks,not now,maybe later=no; selfie,a selfie,pose,strike a pose=selfie; you take it,take it yourself,you take the photo=tablet" custom_choice="0" tooltip="word,word=output; ...  (spoken answers)" id="12" /><Parameter name="Replies" inherits_from_parent="0" content_type="3" value="yes=Ho ho ho, awesome!; no=No problem at all! Merry Christmas anyway!; selfie=Oh yes, Christmas selfie time!; tablet=Great, I will be Santa's photographer!" default_value="yes=Ho ho ho, awesome!; no=No problem at all! Merry Christmas anyway!; selfie=Oh yes, Christmas selfie time!; tablet=Great, I will be Santa's photographer!" custom_choice="0" tooltip="output=what Pepper answers; ..." id="13" /><Parameter name="Sound" inherits_from_parent="0" content_type="3" value="" default_value="" custom_choice="0" tooltip="Optional sound file in sounds/ played at the start." id="14" /><Parameter name="If nobody answers (s)" inherits_from_parent="0" content_type="1" value="120" default_value="120" min="5" max="900" tooltip="Wait this long for a tap or a spoken answer (5 s on the virtual robot)." id="15" /><Parameter name="Timeout output" inherits_from_parent="0" content_type="3" value="no" default_value="no" custom_choice="0" tooltip="Output used when nobody answers." id="16" /><Parameter name="Voice confidence (0-1)" inherits_from_parent="0" content_type="2" value="0.4" default_value="0.4" min="0" max="1" tooltip="Minimum speech recognition confidence." id="17" /></Box><Box name="Ask: Who takes the photo?" id="3" localization="8" tooltip="Reusable 'Ask on Tablet' box: shows a page, Pepper asks, the first tap or spoken answer fires the matching output." x="460" y="60"><bitmap>media/images/box/box-dialog.png</bitmap><script language="4"><content><![CDATA[import os, time
+import re as _re
+_BS = chr(92)
+def _pauses(text):
+    # half-second pause after every sentence, so long lines are easy to follow
+    text = _re.sub(r"([.!?])\s+" + _re.escape(_BS) + r"pau=[1-4]\d\d" + _re.escape(_BS),
+                   lambda m: m.group(1) + " " + _BS + "pau=500" + _BS, text)
+    return _re.sub(r"([.!?])\s+(?!" + _re.escape(_BS) + r"pau)(?=[A-Z^])",
+                   lambda m: m.group(1) + " " + _BS + "pau=500" + _BS + " ", text)
+
+def _waitForPage(session, page, timeout=2.5):
+    # Wait until the tablet reports (event pageReady) that this page is really on the screen,
+    # so Pepper never talks over the previous screen. Gives up after `timeout` seconds.
+    import time as _t
+    state = {"ready": False}
+    def cb(value):
+        if str(value).split("?")[0] == page:
+            state["ready"] = True
+    sub = link = None
+    try:
+        sub = session.service("ALMemory").subscriber("pageReady")
+        link = sub.signal.connect(cb)
+    except Exception:
+        return None
+    return (sub, link, state, _t.time() + timeout)
+
+def _finishWait(handle):
+    import time as _t
+    if handle is None:
+        return
+    sub, link, state, end = handle
+    while not state["ready"] and _t.time() < end:
+        _t.sleep(0.05)
+    try:
+        sub.signal.disconnect(link)
+    except Exception:
+        pass
+    _t.sleep(0.3)          # let the page settle before talking
+
+class MyClass(GeneratedClass):
+    # Reusable "Ask on Tablet" box.
+    #   Page / Query : page of html/pages/ to show (shown FIRST, so a tap works straight away)
+    #   Say          : what Pepper says (can be interrupted by a tap)
+    #   Taps         : tablet event -> output        e.g.  yesAnswer=yes; noAnswer=no
+    #   Words        : spoken words -> output        e.g.  yes,sure,okay=yes; no,no thanks=no
+    #   Replies      : output -> short answer        e.g.  yes=Awesome!; no=No problem!
+    #   Sound        : optional file in sounds/ played when the box starts
+    #   If nobody answers (s) / Timeout output : what happens when nobody taps or speaks
+    # The box then fires the output with that name. Every tap is kept, even one made while Pepper talks.
+
+    def __init__(self):
+        GeneratedClass.__init__(self, False)
+
+    def onLoad(self):
+        self.answer = None
+        self.stopped = False
+        self.links = []
+        self.asrOn = False
+        self.asrName = "AskOnTablet_%d" % id(self)
+
+    def onUnload(self):
+        self.stopped = True
+        self._cleanup()
+
+    def _pairs(self, text):
+        result = []
+        for part in str(text).split(";"):
+            if "=" in part:
+                left, right = part.split("=", 1)
+                result.append((left.strip(), right.strip()))
+        return result
+
+    def _tap(self, output):
+        def cb(value):
+            if self.answer is None:
+                self.answer = output
+        return cb
+
+    def _word(self, value):
+        try:
+            word, conf = str(value[0]), float(value[1])
+        except Exception:
+            return
+        if self.answer is None and conf >= float(self.getParameter("Voice confidence (0-1)")) and word in self.words:
+            self.answer = self.words[word]
+
+    def _cleanup(self):
+        for (sub, link) in self.links:
+            try:
+                sub.signal.disconnect(link)
+            except Exception:
+                pass
+        self.links = []
+        if self.asrOn:
+            try:
+                ALProxy("ALSpeechRecognition").unsubscribe(self.asrName)
+            except Exception:
+                pass
+            self.asrOn = False
+
+    def _root(self):
+        root = os.path.dirname(self.behaviorAbsolutePath())
+        if os.path.isdir(os.path.join(root, "sounds")):
+            return root
+        return "/home/nao/.local/share/PackageManager/apps/" + self.packageUid()
+
+    def onInput_onStart(self):
+        self.answer = None
+        self.stopped = False
+        self.words = {}
+        for (words, output) in self._pairs(self.getParameter("Words")):
+            for w in words.split(","):
+                if w.strip():
+                    self.words[w.strip()] = output
+        replies = dict(self._pairs(self.getParameter("Replies")))
+
+        memory = self.session().service("ALMemory")
+        for (event, output) in self._pairs(self.getParameter("Taps")):
+            try:
+                sub = memory.subscriber(event)
+                self.links.append((sub, sub.signal.connect(self._tap(output))))
+            except Exception as e:
+                self.logger.warning("Cannot subscribe to %s: %s" % (event, str(e)))
+        hasTablet = True
+        waiting = _waitForPage(self.session(), self.getParameter("Page"))
+        try:
+            tablet = self.session().service("ALTabletService")
+            query = self.getParameter("Query")
+            tablet.showWebview("http://198.18.0.1/apps/%s/pages/%s?%s%st=%d" % (
+                self.packageUid(), self.getParameter("Page"), query, "&" if query else "", int(time.time())))
+        except Exception as e:
+            hasTablet = False
+            waiting = None
+            self.logger.warning("No tablet: " + str(e))
+        _finishWait(waiting)                 # Pepper only talks once the page is on the screen
+
+        sound = str(self.getParameter("Sound")).strip()
+        if sound:
+            try:
+                ALProxy("ALAudioPlayer").post.playFile(os.path.join(self._root(), "sounds", sound), 0.45, 0.0)
+            except Exception as e:
+                self.logger.warning("Sound: " + str(e))
+        speech = speechId = None
+        try:
+            speech = ALProxy("ALAnimatedSpeech")
+            speechId = speech.post.say(_pauses(self.getParameter("Say")), {"bodyLanguageMode": "contextual"})
+        except Exception as e:
+            self.logger.warning("Speech: " + str(e))
+        # While Pepper talks only taps count: the microphone must not hear Pepper's own "yes or no".
+        while speechId is not None and self.answer is None and not self.stopped:
+            try:
+                if not speech.isRunning(speechId):
+                    break
+            except Exception:
+                break
+            time.sleep(0.05)
+        if self.words and self.answer is None and not self.stopped:
+            try:
+                asr = ALProxy("ALSpeechRecognition")
+                try:
+                    asr.pause(True)
+                except Exception:
+                    pass
+                asr.setLanguage("English")
+                asr.setVocabulary(list(self.words.keys()), False)
+                try:
+                    asr.pause(False)
+                except Exception:
+                    pass
+                sub = memory.subscriber("WordRecognized")
+                self.links.append((sub, sub.signal.connect(self._word)))
+                asr.subscribe(self.asrName)
+                self.asrOn = True
+            except Exception as e:
+                self.logger.warning("Voice not available, tablet only: " + str(e))
+
+        wait = int(self.getParameter("If nobody answers (s)"))
+        if not hasTablet:
+            wait = min(wait, 5)       # virtual robot: nobody can tap, use the timeout output quickly
+        end = time.time() + wait
+        while self.answer is None and not self.stopped and time.time() < end:
+            time.sleep(0.05)
+        self._cleanup()
+        cut = False
+        try:
+            if speechId is not None and speech.isRunning(speechId):
+                cut = True
+        except Exception:
+            pass
+        try:
+            ALProxy("ALTextToSpeech").stopAll()      # a tap cuts Pepper's sentence
+        except Exception:
+            pass
+        if cut:
+            try:
+                ALProxy("ALRobotPosture").goToPosture("Stand", 0.6)   # arms back down if a gesture was cut
+            except Exception:
+                pass
+        if self.stopped:
+            return
+        answer = self.answer or self.getParameter("Timeout output")
+        self.logger.info("%s -> %s" % (self.getParameter("Page"), answer))
+        if self.answer is not None and sound:
+            try:
+                ALProxy("ALAudioPlayer").stopAll()      # someone answered: stop the music
+            except Exception:
+                pass
+        if answer in replies and replies[answer]:
+            try:
+                ALProxy("ALAnimatedSpeech").say(_pauses(replies[answer]), {"bodyLanguageMode": "contextual"})
+            except Exception:
+                pass
+        getattr(self, answer)()
+
+    def onInput_onStop(self):
+        self.stopped = True]]></content></script><Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="" id="1" /><Input name="onStart" type="1" type_size="1" nature="2" inner="0" tooltip="" id="2" /><Input name="onStop" type="1" type_size="1" nature="3" inner="0" tooltip="" id="3" /><Output name="tablet" type="1" type_size="1" nature="2" inner="0" tooltip="" id="4" /><Output name="selfie" type="1" type_size="1" nature="2" inner="0" tooltip="" id="5" /><Output name="back" type="1" type_size="1" nature="2" inner="0" tooltip="" id="6" /><Output name="finish" type="1" type_size="1" nature="2" inner="0" tooltip="" id="7" /><Parameter name="Page" inherits_from_parent="0" content_type="3" value="photomode.html" default_value="photomode.html" custom_choice="0" tooltip="Page in html/pages/." id="8" /><Parameter name="Query" inherits_from_parent="0" content_type="3" value="" default_value="" custom_choice="0" tooltip="URL parameters for the page." id="9" /><Parameter name="Say" inherits_from_parent="0" content_type="3" value="Who takes the Christmas photo? I can be Santa's photographer, or you can take a selfie with the jolliest robot at the North Pole. Tap your choice on my tablet." default_value="Who takes the Christmas photo? I can be Santa's photographer, or you can take a selfie with the jolliest robot at the North Pole. Tap your choice on my tablet." custom_choice="0" tooltip="What Pepper says (a tap interrupts it)." id="10" /><Parameter name="Taps" inherits_from_parent="0" content_type="3" value="tabletPhotoMode=tablet; selfiePhotoMode=selfie; photoStart=back; photoSkip=finish" default_value="tabletPhotoMode=tablet; selfiePhotoMode=selfie; photoStart=back; photoSkip=finish" custom_choice="0" tooltip="tablet event=output; ..." id="11" /><Parameter name="Words" inherits_from_parent="0" content_type="3" value="tablet,camera,photographer,you take it,first one=tablet; selfie,a selfie,pose,with you,phone,second one=selfie; back,go back=back; no photo,no thanks,finish,skip=finish" default_value="tablet,camera,photographer,you take it,first one=tablet; selfie,a selfie,pose,with you,phone,second one=selfie; back,go back=back; no photo,no thanks,finish,skip=finish" custom_choice="0" tooltip="word,word=output; ...  (spoken answers)" id="12" /><Parameter name="Replies" inherits_from_parent="0" content_type="3" value="" default_value="" custom_choice="0" tooltip="output=what Pepper answers; ..." id="13" /><Parameter name="Sound" inherits_from_parent="0" content_type="3" value="" default_value="" custom_choice="0" tooltip="Optional sound file in sounds/ played at the start." id="14" /><Parameter name="If nobody answers (s)" inherits_from_parent="0" content_type="1" value="180" default_value="180" min="5" max="900" tooltip="Wait this long for a tap or a spoken answer (5 s on the virtual robot)." id="15" /><Parameter name="Timeout output" inherits_from_parent="0" content_type="3" value="finish" default_value="finish" custom_choice="0" tooltip="Output used when nobody answers." id="16" /><Parameter name="Voice confidence (0-1)" inherits_from_parent="0" content_type="2" value="0.4" default_value="0.4" min="0" max="1" tooltip="Minimum speech recognition confidence." id="17" /></Box><Box name="Pepper Takes the Picture" id="4" localization="8" tooltip="Countdown, photo, photo + QR code. Buttons: Retake photo / Photo options / Finish." x="700" y="0"><bitmap>media/images/box/interaction/rec_movie.png</bitmap><script language="4"><content><![CDATA[import os, time
+
+def _waitForPage(session, page, timeout=2.5):
+    # Wait until the tablet reports (event pageReady) that this page is really on the screen,
+    # so Pepper never talks over the previous screen. Gives up after `timeout` seconds.
+    import time as _t
+    state = {"ready": False}
+    def cb(value):
+        if str(value).split("?")[0] == page:
+            state["ready"] = True
+    sub = link = None
+    try:
+        sub = session.service("ALMemory").subscriber("pageReady")
+        link = sub.signal.connect(cb)
+    except Exception:
+        return None
+    return (sub, link, state, _t.time() + timeout)
+
+def _finishWait(handle):
+    import time as _t
+    if handle is None:
+        return
+    sub, link, state, end = handle
+    while not state["ready"] and _t.time() < end:
+        _t.sleep(0.05)
+    try:
+        sub.signal.disconnect(link)
+    except Exception:
+        pass
+    _t.sleep(0.3)          # let the page settle before talking
+
+try:
+    from urllib import quote
+except ImportError:
+    from urllib.parse import quote
+import re as _re
+_BS = chr(92)
+def _pauses(text):
+    # half-second pause after every sentence, so long lines are easy to follow
+    text = _re.sub(r"([.!?])\s+" + _re.escape(_BS) + r"pau=[1-4]\d\d" + _re.escape(_BS),
+                   lambda m: m.group(1) + " " + _BS + "pau=500" + _BS, text)
+    return _re.sub(r"([.!?])\s+(?!" + _re.escape(_BS) + r"pau)(?=[A-Z^])",
+                   lambda m: m.group(1) + " " + _BS + "pau=500" + _BS + " ", text)
+
+class MyClass(GeneratedClass):
+    # Countdown -> photo with Pepper's camera -> photo + QR code on the tablet (photo.html).
+    # Buttons: "Retake photo" (photoRetake: deletes it and takes a new one), "Photo options" (photoBack -> backToOptions),
+    #          "Finish" (photoExit -> onStopped).
+
+    def __init__(self):
+        GeneratedClass.__init__(self, False)
+
+    def onLoad(self):
+        self.answer = None
+        self.stopped = False
+
+    def onUnload(self):
+        self.stopped = True
+
+    def _say(self, text, wait=True):
+        try:
+            tts = ALProxy("ALTextToSpeech")
+            if wait:
+                tts.say(_pauses(text))
+            else:
+                tts.post.say(_pauses(text))
+        except Exception:
+            time.sleep(0.5)
+
+    def _show(self, page, query=""):
+        waiting = _waitForPage(self.session(), page)
+        try:
+            self.session().service("ALTabletService").showWebview(
+                "http://198.18.0.1/apps/%s/pages/%s?%st=%d" % (self.packageUid(), page, query, int(time.time())))
+        except Exception as e:
+            self.logger.warning("Tablet error: " + str(e))
+            waiting = None
+        _finishWait(waiting)                 # talk only once the page is on the screen
+
+    def _sound(self, name, volume):
+        try:
+            return ALProxy("ALAudioPlayer").post.playFile(os.path.join(self._root(), "sounds", name), volume, 0.0)
+        except Exception as e:
+            self.logger.warning("Sound: " + str(e))
+            return None
+
+    def _root(self):
+        root = os.path.dirname(self.behaviorAbsolutePath())
+        if os.path.isdir(os.path.join(root, "html")):
+            return root
+        return "/home/nao/.local/share/PackageManager/apps/" + self.packageUid()
+
+    def _wifiIp(self):
+        manual = str(self.getParameter("Robot Wi-Fi IP (optional)")).strip()
+        if manual:
+            return manual
+        import socket, subprocess
+        try:
+            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            s.connect(("8.8.8.8", 80))           # no data is sent: this only picks the outgoing interface
+            ip = s.getsockname()[0]
+            s.close()
+            if ip and not ip.startswith("127.") and not ip.startswith("198.18."):
+                return ip
+        except Exception:
+            pass
+        for iface in ("wlan0", "eth0"):
+            try:
+                for word in subprocess.check_output(["ip", "-4", "addr", "show", iface]).split():
+                    if word.count(".") == 3 and "/" in word and not word.startswith("198.18."):
+                        return word.split("/")[0]
+            except Exception:
+                pass
+        return ""
+
+    def _eyes(self, flash):
+        try:
+            leds = ALProxy("ALLeds")
+            if flash:
+                leds.fadeRGB("FaceLeds", 0xFFFFFF, 0.05)
+            else:
+                leds.fadeRGB("LeftFaceLeds", 0xFF2030, 0.3)     # Christmas eyes: red / green
+                leds.fadeRGB("RightFaceLeds", 0x20FF50, 0.3)
+        except Exception:
+            pass
+
+    def _takePhoto(self, memory, retake):
+        self._show("countdown.html")                            # waits until the page is on the screen
+        self._sound("jingle_short.ogg", 0.35)                   # Jingle Bells during the countdown
+        if retake:
+            self._say("Let's try that again! \\pau=300\\ Squeeze in, and look right at my eyes.")
+        else:
+            self._say("Everyone squeeze in, like presents under the tree! \\pau=300\\ Closer, closer. \\pau=300\\ Look right at my eyes.")
+        for n, word in ((3, "Three!"), (2, "Two!"), (1, "One!")):
+            try:
+                memory.raiseEvent("photoCountdown", n)
+            except Exception:
+                pass
+            self._say(word)
+            time.sleep(0.35)
+        self._say("Say Merry Christmas!", wait=False)
+        time.sleep(0.6)
+        photo = ""
+        try:
+            camera = self.session().service("ALPhotoCapture")
+            folder = os.path.join(self._root(), "html", "pics", "photos")
+            if not os.path.isdir(folder):
+                os.makedirs(folder)
+            name = "team_%d" % int(time.time())
+            camera.setCameraID(int(self.getParameter("Camera (0=top, 1=bottom)")))
+            camera.setResolution(int(self.getParameter("Resolution (1=QVGA, 2=VGA, 3=4VGA)")))
+            camera.setPictureFormat("jpg")
+            self._sound("bells.ogg", 0.8)                       # sleigh bells at the click
+            camera.takePicture(folder, name)
+            photo = "photos/%s.jpg" % name
+            self.logger.info("Photo saved: " + photo)
+        except Exception as e:
+            self.logger.warning("Camera not available, photo simulated: " + str(e))
+            self._sound("bells.ogg", 0.8)
+        try:
+            memory.raiseEvent("photoCountdown", 0)
+        except Exception:
+            pass
+        self._eyes(True)
+        time.sleep(0.25)
+        self._eyes(False)
+        return photo
+
+    def _delete(self, photo):
+        if photo:
+            try:
+                os.remove(os.path.join(self._root(), "html", "pics", photo))
+                self.logger.info("Deleted (retake): " + photo)
+            except Exception:
+                pass
+
+    def _cb(self, value):
+        def cb(v):
+            if self.answer is None:
+                self.answer = value
+        return cb
+
+    def onInput_onStart(self):
+        self.stopped = False
+        memory = self.session().service("ALMemory")
+        links = []
+        for (event, value) in (("photoExit", "finish"), ("photoBack", "back"), ("photoRetake", "retake")):
+            try:
+                sub = memory.subscriber(event)
+                links.append((sub, sub.signal.connect(self._cb(value))))
+            except Exception as e:
+                self.logger.warning("Cannot subscribe to %s: %s" % (event, str(e)))
+
+        retake = False
+        while not self.stopped:
+            photo = self._takePhoto(memory, retake)
+            qr = ""
+            if photo and self.getParameter("Show QR code"):
+                ip = self._wifiIp()
+                if ip:
+                    # the phone opens a Christmas page that shows the photo (pages/myphoto.html)
+                    qr = "http://%s/apps/%s/pages/myphoto.html?p=%s" % (ip, self.packageUid(), os.path.basename(photo))
+                else:
+                    self.logger.warning("Wi-Fi IP not found: no QR code (set 'Robot Wi-Fi IP (optional)')")
+            self.answer = None                                  # cleared BEFORE the buttons appear
+            self._show("photo.html", "photo=%s&qr=%s&" % (quote(photo, safe="/"), quote(qr, safe="")))
+            line = "Got it! \\pau=200\\ Wow, that photo belongs on a Christmas card." if photo else \
+                   "Click! \\pau=200\\ Masterpiece. I should be Santa's official photographer."
+            self._say(line + " Not happy with it? Tap retake. Or tap finish when you are ready.", wait=False)
+            end = time.time() + int(self.getParameter("Show photo for (s)"))
+            while self.answer is None and not self.stopped and time.time() < end:
+                time.sleep(0.05)
+            try:
+                ALProxy("ALTextToSpeech").stopAll()
+            except Exception:
+                pass
+            if self.answer == "retake":
+                self._delete(photo)
+                retake = True
+                continue
+            break
+
+        for (sub, link) in links:
+            try:
+                sub.signal.disconnect(link)
+            except Exception:
+                pass
+        if self.stopped:
+            return
+        if self.answer == "back":
+            self.backToOptions()
+        else:
+            self.onStopped()
+
+    def onInput_onStop(self):
+        self.stopped = True]]></content></script><Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="" id="1" /><Input name="onStart" type="1" type_size="1" nature="2" inner="0" tooltip="" id="2" /><Input name="onStop" type="1" type_size="1" nature="3" inner="0" tooltip="" id="3" /><Output name="onStopped" type="1" type_size="1" nature="1" inner="0" tooltip="" id="4" /><Output name="backToOptions" type="1" type_size="1" nature="2" inner="0" tooltip="" id="5" /><Parameter name="Show QR code" inherits_from_parent="0" content_type="0" value="1" default_value="1" tooltip="QR code next to the photo: phones on the same Wi-Fi as Pepper can open and save it." id="6" /><Parameter name="Robot Wi-Fi IP (optional)" inherits_from_parent="0" content_type="3" value="" default_value="" custom_choice="0" tooltip="Leave empty to detect it automatically." id="7" /><Parameter name="Show photo for (s)" inherits_from_parent="0" content_type="1" value="300" default_value="300" min="5" max="900" tooltip="The photo stays until a button is tapped, or this many seconds (then Finish)." id="8" /><Parameter name="Camera (0=top, 1=bottom)" inherits_from_parent="0" content_type="1" value="0" default_value="0" min="0" max="1" tooltip="Camera used for the photo." id="9" /><Parameter name="Resolution (1=QVGA, 2=VGA, 3=4VGA)" inherits_from_parent="0" content_type="1" value="2" default_value="2" min="1" max="3" tooltip="ALPhotoCapture resolution." id="10" /></Box><Box name="Selfie with Pepper (poses)" id="5" localization="8" tooltip="The group picks a pose, Pepper freezes in it, the tablet shows Pepper as Santa Claus." x="700" y="180"><bitmap>media/images/box/movement/move.png</bitmap><script language="4"><content><![CDATA[import time, os
+
+def _waitForPage(session, page, timeout=2.5):
+    # Wait until the tablet reports (event pageReady) that this page is really on the screen,
+    # so Pepper never talks over the previous screen. Gives up after `timeout` seconds.
+    import time as _t
+    state = {"ready": False}
+    def cb(value):
+        if str(value).split("?")[0] == page:
+            state["ready"] = True
+    sub = link = None
+    try:
+        sub = session.service("ALMemory").subscriber("pageReady")
+        link = sub.signal.connect(cb)
+    except Exception:
+        return None
+    return (sub, link, state, _t.time() + timeout)
+
+def _finishWait(handle):
+    import time as _t
+    if handle is None:
+        return
+    sub, link, state, end = handle
+    while not state["ready"] and _t.time() < end:
+        _t.sleep(0.05)
+    try:
+        sub.signal.disconnect(link)
+    except Exception:
+        pass
+    _t.sleep(0.3)          # let the page settle before talking
+import re as _re
+_BS = chr(92)
+def _pauses(text):
+    # UC05: half-second pause after every sentence that does not already have one, so long lines are easier to follow
+    text = _re.sub(r"([.!?])\s+" + _re.escape(_BS) + r"pau=[1-4]\d\d" + _re.escape(_BS),
+                   lambda m: m.group(1) + " " + _BS + "pau=500" + _BS, text)
+    return _re.sub(r"([.!?])\s+(?!" + _re.escape(_BS) + r"pau)(?=[A-Z^])",
+                   lambda m: m.group(1) + " " + _BS + "pau=500" + _BS + " ", text)
+
+# Pepper's poses (radians; hands 0 = closed, 1 = open). All values stay inside Pepper's joint limits.
+JOINTS = ["HeadYaw", "HeadPitch",
+          "LShoulderPitch", "LShoulderRoll", "LElbowYaw", "LElbowRoll", "LWristYaw", "LHand",
+          "RShoulderPitch", "RShoulderRoll", "RElbowYaw", "RElbowRoll", "RWristYaw", "RHand", "HipRoll"]
+POSES = {
+    # key: (what Pepper says, angles in JOINTS order) - keys must match the buttons in posechoice.html
+    # (keys stay the same as the buttons in posechoice.html; the names on the buttons are Christmas ones)
+    "champion":  ("Ho ho ho! The Santa!",            # one arm waving high, open hand, head up
+                  [0.15, -0.25, 1.5, 0.25, -1.2, -0.5, 0.0, 0.5,    -1.3, -0.3, 1.4, 0.3, 0.0, 1.0,     0.05]),
+    "superstar": ("The Reindeer! Look at my antlers!",  # both arms up in a V, hands wide open
+                  [0.0, -0.25, -1.2, 0.5, -1.4, -0.4, 0.0, 1.0,    -1.2, -0.5, 1.4, 0.4, 0.0, 1.0,     0.0]),
+    "cool":      ("The Snowman! Brr, it's cold up here!",  # both arms straight out to the FRONT, hands open
+                  [0.0, -0.1,   0.05, 0.12, -1.4, -0.05, 0.0, 1.0,  0.05, -0.12, 1.4, 0.05, 0.0, 1.0,   0.0]),
+    "hug":       ("The big Christmas hug!",
+                  [0.0, -0.15,  0.3, 1.0, -1.3, -0.3, 0.0, 1.0,     0.3, -1.0, 1.3, 0.3, 0.0, 1.0,     0.0]),
+}
+
+class MyClass(GeneratedClass):
+    # UC05 step 4 (pose option): the group picks a pose on the tablet (posechoice.html, event poseChosen),
+    # Pepper strikes that pose while the tablet shows Pepper as Santa Claus (photologo.html),
+    # and the group takes photos WITH Pepper on their phones. "We're done" (event poseDone) ends it.
+
+    def __init__(self):
+        GeneratedClass.__init__(self, False)
+
+    def onLoad(self):
+        self.choice = None
+        self.stopped = False
+        self.links = []
+        self.motion = None
+        self.tts = None
+        try:
+            self.motion = ALProxy("ALMotion")
+        except Exception as e:
+            self.logger.warning("ALMotion not available: " + str(e))
+        try:
+            self.tts = ALProxy("ALTextToSpeech")
+        except Exception as e:
+            self.logger.warning("ALTextToSpeech not available: " + str(e))
+
+    def onUnload(self):
+        self.stopped = True
+        self._disconnect()
+
+    def _say(self, text):
+        try:
+            self.tts.say(_pauses(text))
+        except Exception:
+            time.sleep(0.8)
+
+    def _show(self, page, query=""):
+        waiting = _waitForPage(self.session(), page)
+        try:
+            tablet = self.session().service("ALTabletService")
+            tablet.showWebview("http://198.18.0.1/apps/%s/pages/%s?%st=%d" % (self.packageUid(), page, query, int(time.time())))
+        except Exception as e:
+            self.logger.warning("Tablet error: " + str(e))
+            waiting = None
+        _finishWait(waiting)                 # talk only once the page is on the screen
+
+    def _bells(self):
+        try:
+            root = os.path.dirname(self.behaviorAbsolutePath())
+            if not os.path.isdir(os.path.join(root, "sounds")):
+                root = "/home/nao/.local/share/PackageManager/apps/" + self.packageUid()
+            ALProxy("ALAudioPlayer").post.playFile(os.path.join(root, "sounds", "bells.ogg"), 0.8, 0.0)
+        except Exception as e:
+            self.logger.warning("Bells: " + str(e))
+
+    def _disconnect(self):
+        for (sub, link) in self.links:
+            try:
+                sub.signal.disconnect(link)
+            except Exception:
+                pass
+        self.links = []
+
+    def _onChosen(self, value):
+        self.choice = str(value)
+
+    def _onDone(self, value):
+        self.choice = "done"
+
+    def _onBack(self, value):
+        self.choice = "back"
+
+    def _waitForChoice(self, timeout):
+        # self.choice is cleared BEFORE the choices are shown (see _offerChoices), so a tap made
+        # while Pepper is still talking is kept instead of being thrown away.
+        end = time.time() + timeout
+        while self.choice is None and not self.stopped and time.time() < end:
+            time.sleep(0.1)
+        return self.choice or "done"        # no choice before the timeout -> finish
+
+    def _offerChoices(self, query, line):
+        self.choice = None                  # forget anything tapped earlier (e.g. during the pose)
+        self._show("posechoice.html", query)
+        try:
+            self.tts.post.say(_pauses(line))  # not blocking: a tap can interrupt it
+        except Exception:
+            pass
+
+    def _strike(self, angles):
+        try:
+            self.motion.angleInterpolation(JOINTS, angles, 1.5, True)     # blocking: Pepper is in the pose after this
+        except Exception as e:
+            self.logger.error("Pose error: " + str(e))
+
+    def _freeze(self, on):
+        # on=True: stop "breathing" and idle background moves so Pepper is perfectly still in the pose
+        try:
+            self.motion.setBreathEnabled("Body", not on)
+        except Exception:
+            pass
+        try:
+            moves = ALProxy("ALAutonomousMoves")
+            moves.setBackgroundStrategy("none" if on else "backToNeutral")
+            moves.setExpressiveListeningEnabled(not on)
+        except Exception:
+            pass
+
+    def _neutral(self):
+        try:
+            ALProxy("ALRobotPosture").goToPosture("Stand", 0.6)
+        except Exception as e:
+            self.logger.warning("Posture: " + str(e))
+
+    def onInput_onStart(self):
+        self.stopped = False
+        try:
+            memory = self.session().service("ALMemory")
+            for (event, cb) in (("poseChosen", self._onChosen), ("poseDone", self._onDone), ("poseBack", self._onBack)):
+                sub = memory.subscriber(event)
+                self.links.append((sub, sub.signal.connect(cb)))
+        except Exception as e:
+            self.logger.warning("Cannot subscribe to pose events: " + str(e))
+        awareness = None
+        try:
+            awareness = ALProxy("ALBasicAwareness")
+            awareness.pauseAwareness()        # keep the head still for the photo
+        except Exception:
+            awareness = None
+        try:
+            self.motion.wakeUp()
+        except Exception:
+            pass
+
+        self._offerChoices("", "Christmas photo shoot! \\pau=300\\ Pick my pose on the tablet, and get your phones ready.")
+
+        timeout = int(self.getParameter("Wait for a choice (s)"))
+        hold = float(self.getParameter("Hold pose (s)"))
+        poses_done = 0
+        last = "done"
+        while not self.stopped:
+            choice = self._waitForChoice(timeout)
+            try:
+                self.tts.stopAll()            # tap -> stop talking, pose immediately
+            except Exception:
+                pass
+            if choice not in POSES:
+                last = choice                 # "done" (finish) or "back" (photo options)
+                break
+            line, angles = POSES[choice]
+            self.logger.info("Pose chosen: " + choice)
+            self._show("photologo.html", "pose=%s&" % choice)     # picture that matches the pose               # Pepper as Santa Claus + "Merry Christmas!" during the photo
+            self._freeze(True)
+            self._strike(angles)                        # returns when Pepper is IN the pose
+            frozen_at = time.time()
+            self._bells()                               # sleigh bells: photo time!
+            try:
+                self.tts.post.say(_pauses(line + " Freeze like an icicle! Take your photos now!"))   # talking does not move the body
+            except Exception:
+                pass
+            while time.time() - frozen_at < hold and not self.stopped:   # hold the pose: Pepper does not move
+                time.sleep(0.1)
+            self._say("Got it? \\pau=200\\ Relaxing now.")
+            self._freeze(False)
+            self._neutral()
+            poses_done += 1
+            self._offerChoices("again=1&", "Another pose? \\pau=200\\ Pick one, go back to the photo options, or tap finish.")
+
+        self._disconnect()
+        self._freeze(False)
+        self._neutral()
+        if awareness is not None:
+            try:
+                awareness.resumeAwareness()
+            except Exception:
+                pass
+        if last == "back":
+            self.backToOptions()
+            return
+        if poses_done:
+            self._say("What a Christmas photo shoot! \\pau=300\\ Please send me a copy. \\pau=200\\ Just kidding, I don't have a phone. \\pau=200\\ Maybe Santa will bring me one.")
+        self.onStopped()
+
+    def onInput_onStop(self):
+        self.stopped = True]]></content></script><Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="" id="1" /><Input name="onStart" type="1" type_size="1" nature="2" inner="0" tooltip="" id="2" /><Input name="onStop" type="1" type_size="1" nature="3" inner="0" tooltip="" id="3" /><Output name="onStopped" type="1" type_size="1" nature="1" inner="0" tooltip="" id="4" /><Output name="backToOptions" type="1" type_size="1" nature="2" inner="0" tooltip="" id="5" /><Parameter name="Hold pose (s)" inherits_from_parent="0" content_type="1" value="10" default_value="10" min="2" max="40" tooltip="How long Pepper stays frozen in each pose." id="6" /><Parameter name="Wait for a choice (s)" inherits_from_parent="0" content_type="1" value="180" default_value="180" min="10" max="600" tooltip="If nobody taps anything for this long, Pepper finishes." id="7" /></Box><Box name="Ask: Goodbye (more photos?)" id="6" localization="8" tooltip="Reusable 'Ask on Tablet' box: shows a page, Pepper asks, the first tap or spoken answer fires the matching output." x="940" y="60"><bitmap>media/images/box/box-dialog.png</bitmap><script language="4"><content><![CDATA[import os, time
+import re as _re
+_BS = chr(92)
+def _pauses(text):
+    # half-second pause after every sentence, so long lines are easy to follow
+    text = _re.sub(r"([.!?])\s+" + _re.escape(_BS) + r"pau=[1-4]\d\d" + _re.escape(_BS),
+                   lambda m: m.group(1) + " " + _BS + "pau=500" + _BS, text)
+    return _re.sub(r"([.!?])\s+(?!" + _re.escape(_BS) + r"pau)(?=[A-Z^])",
+                   lambda m: m.group(1) + " " + _BS + "pau=500" + _BS + " ", text)
+
+def _waitForPage(session, page, timeout=2.5):
+    # Wait until the tablet reports (event pageReady) that this page is really on the screen,
+    # so Pepper never talks over the previous screen. Gives up after `timeout` seconds.
+    import time as _t
+    state = {"ready": False}
+    def cb(value):
+        if str(value).split("?")[0] == page:
+            state["ready"] = True
+    sub = link = None
+    try:
+        sub = session.service("ALMemory").subscriber("pageReady")
+        link = sub.signal.connect(cb)
+    except Exception:
+        return None
+    return (sub, link, state, _t.time() + timeout)
+
+def _finishWait(handle):
+    import time as _t
+    if handle is None:
+        return
+    sub, link, state, end = handle
+    while not state["ready"] and _t.time() < end:
+        _t.sleep(0.05)
+    try:
+        sub.signal.disconnect(link)
+    except Exception:
+        pass
+    _t.sleep(0.3)          # let the page settle before talking
+
+class MyClass(GeneratedClass):
+    # Reusable "Ask on Tablet" box.
+    #   Page / Query : page of html/pages/ to show (shown FIRST, so a tap works straight away)
+    #   Say          : what Pepper says (can be interrupted by a tap)
+    #   Taps         : tablet event -> output        e.g.  yesAnswer=yes; noAnswer=no
+    #   Words        : spoken words -> output        e.g.  yes,sure,okay=yes; no,no thanks=no
+    #   Replies      : output -> short answer        e.g.  yes=Awesome!; no=No problem!
+    #   Sound        : optional file in sounds/ played when the box starts
+    #   If nobody answers (s) / Timeout output : what happens when nobody taps or speaks
+    # The box then fires the output with that name. Every tap is kept, even one made while Pepper talks.
+
+    def __init__(self):
+        GeneratedClass.__init__(self, False)
+
+    def onLoad(self):
+        self.answer = None
+        self.stopped = False
+        self.links = []
+        self.asrOn = False
+        self.asrName = "AskOnTablet_%d" % id(self)
+
+    def onUnload(self):
+        self.stopped = True
+        self._cleanup()
+
+    def _pairs(self, text):
+        result = []
+        for part in str(text).split(";"):
+            if "=" in part:
+                left, right = part.split("=", 1)
+                result.append((left.strip(), right.strip()))
+        return result
+
+    def _tap(self, output):
+        def cb(value):
+            if self.answer is None:
+                self.answer = output
+        return cb
+
+    def _word(self, value):
+        try:
+            word, conf = str(value[0]), float(value[1])
+        except Exception:
+            return
+        if self.answer is None and conf >= float(self.getParameter("Voice confidence (0-1)")) and word in self.words:
+            self.answer = self.words[word]
+
+    def _cleanup(self):
+        for (sub, link) in self.links:
+            try:
+                sub.signal.disconnect(link)
+            except Exception:
+                pass
+        self.links = []
+        if self.asrOn:
+            try:
+                ALProxy("ALSpeechRecognition").unsubscribe(self.asrName)
+            except Exception:
+                pass
+            self.asrOn = False
+
+    def _root(self):
+        root = os.path.dirname(self.behaviorAbsolutePath())
+        if os.path.isdir(os.path.join(root, "sounds")):
+            return root
+        return "/home/nao/.local/share/PackageManager/apps/" + self.packageUid()
+
+    def onInput_onStart(self):
+        self.answer = None
+        self.stopped = False
+        self.words = {}
+        for (words, output) in self._pairs(self.getParameter("Words")):
+            for w in words.split(","):
+                if w.strip():
+                    self.words[w.strip()] = output
+        replies = dict(self._pairs(self.getParameter("Replies")))
+
+        memory = self.session().service("ALMemory")
+        for (event, output) in self._pairs(self.getParameter("Taps")):
+            try:
+                sub = memory.subscriber(event)
+                self.links.append((sub, sub.signal.connect(self._tap(output))))
+            except Exception as e:
+                self.logger.warning("Cannot subscribe to %s: %s" % (event, str(e)))
+        hasTablet = True
+        waiting = _waitForPage(self.session(), self.getParameter("Page"))
+        try:
+            tablet = self.session().service("ALTabletService")
+            query = self.getParameter("Query")
+            tablet.showWebview("http://198.18.0.1/apps/%s/pages/%s?%s%st=%d" % (
+                self.packageUid(), self.getParameter("Page"), query, "&" if query else "", int(time.time())))
+        except Exception as e:
+            hasTablet = False
+            waiting = None
+            self.logger.warning("No tablet: " + str(e))
+        _finishWait(waiting)                 # Pepper only talks once the page is on the screen
+
+        sound = str(self.getParameter("Sound")).strip()
+        if sound:
+            try:
+                ALProxy("ALAudioPlayer").post.playFile(os.path.join(self._root(), "sounds", sound), 0.45, 0.0)
+            except Exception as e:
+                self.logger.warning("Sound: " + str(e))
+        speech = speechId = None
+        try:
+            speech = ALProxy("ALAnimatedSpeech")
+            speechId = speech.post.say(_pauses(self.getParameter("Say")), {"bodyLanguageMode": "contextual"})
+        except Exception as e:
+            self.logger.warning("Speech: " + str(e))
+        # While Pepper talks only taps count: the microphone must not hear Pepper's own "yes or no".
+        while speechId is not None and self.answer is None and not self.stopped:
+            try:
+                if not speech.isRunning(speechId):
+                    break
+            except Exception:
+                break
+            time.sleep(0.05)
+        if self.words and self.answer is None and not self.stopped:
+            try:
+                asr = ALProxy("ALSpeechRecognition")
+                try:
+                    asr.pause(True)
+                except Exception:
+                    pass
+                asr.setLanguage("English")
+                asr.setVocabulary(list(self.words.keys()), False)
+                try:
+                    asr.pause(False)
+                except Exception:
+                    pass
+                sub = memory.subscriber("WordRecognized")
+                self.links.append((sub, sub.signal.connect(self._word)))
+                asr.subscribe(self.asrName)
+                self.asrOn = True
+            except Exception as e:
+                self.logger.warning("Voice not available, tablet only: " + str(e))
+
+        wait = int(self.getParameter("If nobody answers (s)"))
+        if not hasTablet:
+            wait = min(wait, 5)       # virtual robot: nobody can tap, use the timeout output quickly
+        end = time.time() + wait
+        while self.answer is None and not self.stopped and time.time() < end:
+            time.sleep(0.05)
+        self._cleanup()
+        cut = False
+        try:
+            if speechId is not None and speech.isRunning(speechId):
+                cut = True
+        except Exception:
+            pass
+        try:
+            ALProxy("ALTextToSpeech").stopAll()      # a tap cuts Pepper's sentence
+        except Exception:
+            pass
+        if cut:
+            try:
+                ALProxy("ALRobotPosture").goToPosture("Stand", 0.6)   # arms back down if a gesture was cut
+            except Exception:
+                pass
+        if self.stopped:
+            return
+        answer = self.answer or self.getParameter("Timeout output")
+        self.logger.info("%s -> %s" % (self.getParameter("Page"), answer))
+        if self.answer is not None and sound:
+            try:
+                ALProxy("ALAudioPlayer").stopAll()      # someone answered: stop the music
+            except Exception:
+                pass
+        if answer in replies and replies[answer]:
+            try:
+                ALProxy("ALAnimatedSpeech").say(_pauses(replies[answer]), {"bodyLanguageMode": "contextual"})
+            except Exception:
+                pass
+        getattr(self, answer)()
+
+    def onInput_onStop(self):
+        self.stopped = True]]></content></script><Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="" id="1" /><Input name="onStart" type="1" type_size="1" nature="2" inner="0" tooltip="" id="2" /><Input name="onStop" type="1" type_size="1" nature="3" inner="0" tooltip="" id="3" /><Output name="more" type="1" type_size="1" nature="2" inner="0" tooltip="" id="4" /><Output name="finish" type="1" type_size="1" nature="2" inner="0" tooltip="" id="5" /><Parameter name="Page" inherits_from_parent="0" content_type="3" value="goodbye.html" default_value="goodbye.html" custom_choice="0" tooltip="Page in html/pages/." id="6" /><Parameter name="Query" inherits_from_parent="0" content_type="3" value="" default_value="" custom_choice="0" tooltip="URL parameters for the page." id="7" /><Parameter name="Say" inherits_from_parent="0" content_type="3" value="Enjoy your photos! Merry Christmas, and happy holidays! Ho ho ho!" default_value="Enjoy your photos! Merry Christmas, and happy holidays! Ho ho ho!" custom_choice="0" tooltip="What Pepper says (a tap interrupts it)." id="8" /><Parameter name="Taps" inherits_from_parent="0" content_type="3" value="morePhotos=more; finishPhotos=finish" default_value="morePhotos=more; finishPhotos=finish" custom_choice="0" tooltip="tablet event=output; ..." id="9" /><Parameter name="Words" inherits_from_parent="0" content_type="3" value="more photos,more,another photo,again=more; finish,bye,goodbye,done=finish" default_value="more photos,more,another photo,again=more; finish,bye,goodbye,done=finish" custom_choice="0" tooltip="word,word=output; ...  (spoken answers)" id="10" /><Parameter name="Replies" inherits_from_parent="0" content_type="3" value="more=More photos? Ho ho ho, let's go!; finish=^start(animations/Stand/Gestures/Hey_1) Bye bye! Merry Christmas! ^wait(animations/Stand/Gestures/Hey_1)" default_value="more=More photos? Ho ho ho, let's go!; finish=^start(animations/Stand/Gestures/Hey_1) Bye bye! Merry Christmas! ^wait(animations/Stand/Gestures/Hey_1)" custom_choice="0" tooltip="output=what Pepper answers; ..." id="11" /><Parameter name="Sound" inherits_from_parent="0" content_type="3" value="jingle.ogg" default_value="jingle.ogg" custom_choice="0" tooltip="Optional sound file in sounds/ played at the start." id="12" /><Parameter name="If nobody answers (s)" inherits_from_parent="0" content_type="1" value="120" default_value="120" min="5" max="900" tooltip="Wait this long for a tap or a spoken answer (5 s on the virtual robot)." id="13" /><Parameter name="Timeout output" inherits_from_parent="0" content_type="3" value="finish" default_value="finish" custom_choice="0" tooltip="Output used when nobody answers." id="14" /><Parameter name="Voice confidence (0-1)" inherits_from_parent="0" content_type="2" value="0.4" default_value="0.4" min="0" max="1" tooltip="Minimum speech recognition confidence." id="15" /></Box><Link inputowner="1" indexofinput="2" outputowner="0" indexofoutput="2" /><Link inputowner="2" indexofinput="2" outputowner="1" indexofoutput="4" /><Link inputowner="3" indexofinput="2" outputowner="2" indexofoutput="4" /><Link inputowner="4" indexofinput="2" outputowner="2" indexofoutput="6" /><Link inputowner="5" indexofinput="2" outputowner="2" indexofoutput="7" /><Link inputowner="6" indexofinput="2" outputowner="2" indexofoutput="5" /><Link inputowner="4" indexofinput="2" outputowner="3" indexofoutput="4" /><Link inputowner="5" indexofinput="2" outputowner="3" indexofoutput="5" /><Link inputowner="2" indexofinput="2" outputowner="3" indexofoutput="6" /><Link inputowner="6" indexofinput="2" outputowner="3" indexofoutput="7" /><Link inputowner="3" indexofinput="2" outputowner="4" indexofoutput="5" /><Link inputowner="6" indexofinput="2" outputowner="4" indexofoutput="4" /><Link inputowner="3" indexofinput="2" outputowner="5" indexofoutput="5" /><Link inputowner="6" indexofinput="2" outputowner="5" indexofoutput="4" /><Link inputowner="3" indexofinput="2" outputowner="6" indexofoutput="4" /><Link inputowner="0" indexofinput="4" outputowner="6" indexofoutput="5" /></Diagram></BehaviorKeyframe></BehaviorLayer></Timeline></Box></ChoregrapheProject>
