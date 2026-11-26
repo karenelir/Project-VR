@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>How do we take the photo?</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="../css/uc05.css">
+    <script src="/libs/qi/2/qi.js"></script>
+    <script src="../js/jquery.js"></script>
+    <script src="../js/qievents.js"></script>
+    <script src="../js/uc05.js"></script>
+    <style>
+        .choices { display: flex; flex-direction: row; justify-content: center; }
+        .choice { width: 40vw; margin: 0 1.4vw; padding: 5.5vh 2vw; text-transform: none; letter-spacing: 0.5px; font-size: 3.64vw; }
+        .choice svg { display: block; width: 7.8vw; height: 7.8vw; margin: 0 auto 2vh auto; }
+        .choice small { display: block; font-size: 2.27vw; font-weight: 500; margin-top: 1.2vh; opacity: .8; }
+        #tabletBtn svg { stroke: #06151a; }
+        #poseBtn svg { stroke: #6ee7ff; }
+    </style>
+</head>
+<!-- UC05 step 4: after "yes" to the photo, choose how to take it.
+     "Pepper takes the picture" -> event tabletPhotoMode (Pepper's camera, shown on the tablet)
+     "Selfie with Pepper"       -> event selfiePhotoMode (Pepper strikes poses, the group uses their phones)
+     "No photo, continue to rating" -> event photoSkip.
+     All are handled by the "Choose Photo Mode (step 4)" box, which moves on as soon as one is tapped. -->
+<body>
+    <div class="backdrop" id="backdrop"></div>
+    <div class="backdrop-shade"></div>
+    <div class="stage">
+        <span class="kicker">Team photo</span>
+        <h1>Who takes the photo?</h1>
+        <p class="subtitle">Tap your choice, or say "tablet" or "selfie".</p>
+        <div class="choices">
+            <button type="button" id="tabletBtn" class="btn primary choice" onclick="uc05Choose(this, 'tabletPhotoMode', 1)">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8 H7 L9 5 H15 L17 8 H21 V19 H3 Z"/><circle cx="12" cy="13" r="3.5"/></svg>
+                Pepper takes the picture<small>Shown right here on my tablet</small>
+            </button>
+            <button type="button" id="poseBtn" class="btn choice" onclick="uc05Choose(this, 'selfiePhotoMode', 1)">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2.5" width="10" height="19" rx="2"/><path d="M11 18.5 H13"/><path d="M2.5 8 L4.5 9 M2 12 H4.5 M2.5 16 L4.5 15 M21.5 8 L19.5 9 M22 12 H19.5 M21.5 16 L19.5 15"/></svg>
+                Selfie with Pepper<small>Pepper strikes a pose, you use your phones</small>
+            </button>
+        </div>
+        <div class="navrow" style="margin-top:3vh;">
+            <button type="button" class="btn nav nav-back" onclick="uc05Choose(this, 'photoSkip', 1)">No photo, continue to rating<svg class="r" viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12 H19 M13 6 L19 12 L13 18"/></svg></button>
+        </div>
+    </div>
+    <script type="text/javascript">
+        uc05SetBackdrop("backdrop", "../pics/zerovr.png");
+    </script>
+</body>
+</html>

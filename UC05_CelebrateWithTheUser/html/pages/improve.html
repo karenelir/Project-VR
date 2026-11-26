@@ -10,9 +10,9 @@
     <script src="../js/qievents.js"></script>
     <script src="../js/uc05.js"></script>
     <style>
-        .ideas { display: flex; flex-direction: row; flex-wrap: wrap; justify-content: center; max-width: 72vw; margin-bottom: 2vh; }
-        .idea { width: 22vw; margin: 0 0.8vw 2vh 0.8vw; padding: 3vh 1.5vw; font-size: 1.5vw; text-transform: none; letter-spacing: 0.5px; }
-        .idea svg { display: block; width: 3.2vw; height: 3.2vw; margin: 0 auto 1.4vh auto; stroke: #6ee7ff; }
+        .ideas { display: flex; flex-direction: row; flex-wrap: wrap; justify-content: center; max-width: 86vw; margin-bottom: 2vh; }
+        .idea { width: 27vw; margin: 0 0.8vw 2vh 0.8vw; padding: 3.5vh 1.5vw; font-size: 2.73vw; text-transform: none; letter-spacing: 0.5px; }
+        .idea svg { display: block; width: 4.6vw; height: 4.6vw; margin: 0 auto 1.4vh auto; stroke: #6ee7ff; }
     </style>
 </head>
 <!-- UC05 extension 6b: after a low rating, one short, non-defensive follow-up.
@@ -38,7 +38,9 @@
             <button type="button" class="btn idea" onclick="uc05Choose(this, 'improvementGiven', 'other')">
                 <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><circle cx="6" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="18" cy="12" r="1"/></svg>Something else</button>
         </div>
-        <button type="button" class="btn ghost" onclick="uc05Choose(this, 'improvementSkipped', 1)">Skip</button>
+        <div class="navrow">
+            <button type="button" class="btn nav nav-back" onclick="uc05Choose(this, 'improvementSkipped', 1)">No thanks, everything was fine<svg class="r" viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12 H19 M13 6 L19 12 L13 18"/></svg></button>
+        </div>
     </div>
     <script type="text/javascript">
         uc05SetBackdrop("backdrop", "../pics/zerovr.png");

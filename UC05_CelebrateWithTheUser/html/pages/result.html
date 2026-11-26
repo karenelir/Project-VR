@@ -7,8 +7,8 @@
     <link rel="stylesheet" href="../css/uc05.css">
     <script src="../js/uc05.js"></script>
     <style>
-        h1 { font-size: 6vw; margin-bottom: 1vh; }
-        .game { font-size: 1.8vw; font-weight: 600; color: #c3c7de; margin-bottom: 3vh; }
+        h1 { font-size: 7.13vw; margin-bottom: 1vh; }
+        .game { font-size: 3.28vw; font-weight: 600; color: #c3c7de; margin-bottom: 3vh; }
         .score {
             display: none;
             padding: 2vh 3.5vw; margin-bottom: 3vh;
@@ -17,9 +17,29 @@
             -webkit-clip-path: polygon(1.4vw 0, 100% 0, 100% calc(100% - 1.4vw), calc(100% - 1.4vw) 100%, 0 100%, 0 1.4vw);
             clip-path: polygon(1.4vw 0, 100% 0, 100% calc(100% - 1.4vw), calc(100% - 1.4vw) 100%, 0 100%, 0 1.4vw);
         }
-        .score .num { font-size: 5.5vw; font-weight: 800; line-height: 1; color: #6ee7ff; }
-        .score .unit { font-size: 1.2vw; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: #8f95b2; margin-top: 0.8vh; }
-        .message { font-size: 1.9vw; line-height: 1.4; max-width: 58vw; }
+        .score .num { font-size: 6.53vw; font-weight: 800; line-height: 1; color: #6ee7ff; }
+        .score .unit { font-size: 2.18vw; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: #8f95b2; margin-top: 0.8vh; }
+        .message { font-size: 3.46vw; line-height: 1.4; max-width: 58vw; }
+        /* player scores from the venue PC (/api/scores). Inline-block cells = works on Pepper's old tablet browser.
+           1 column up to 4 players, 2 columns up to 10, 3 columns above. Sizes shrink so it always fits. */
+        .players-box { display: none; width: 76vw; margin: 0 auto 2.2vh; border: 2px solid rgba(110,231,255,0.45);
+                       background: rgba(110,231,255,0.08); padding: 1vh 1.2vw; box-sizing: border-box; }
+        .players-heading { color: #6ee7ff; font-size: 1.9vw; font-weight: 800; letter-spacing: 3px; margin-bottom: 0.4vh; }
+        .pcell { display: inline-block; vertical-align: top; box-sizing: border-box; padding: 0.5vh 1vw;
+                 border-bottom: 1px solid rgba(195,199,222,0.2); text-align: left; white-space: nowrap; overflow: hidden; margin: 0 1%; }
+        .pcell .pname { display: inline-block; vertical-align: middle; overflow: hidden; text-overflow: ellipsis; color: #f4f1ff; }
+        .pcell .pts { float: right; margin-left: 0.8vw; color: #6ee7ff; font-weight: 800; }
+        .win .pcell .pts { color: #ffd45e; }
+        .total { display: none; margin: -1.6vh 0 1.8vh; font-size: 2.3vw; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #8f95b2; }
+        .total b { color: #6ee7ff; font-size: 3vw; letter-spacing: 0; margin-left: 0.6vw; }
+        .win .total b { color: #ffd45e; }
+        /* many players: smaller title, game line and message so everything stays on the screen */
+        .many h1 { font-size: 5.6vw; margin-bottom: 0.4vh; }
+        .many .game { font-size: 2.6vw; margin-bottom: 2vh; }
+        .many .message { font-size: 2.7vw; }
+        .many .kicker { display: none; }
+        .many .total { margin: -1vh 0 1.2vh; }
+        .many .players-box { margin-bottom: 1.6vh; }
 
         .win h1 { color: #ffd45e; text-shadow: 0 0 3vw rgba(255,212,94,0.45); }
         .win .score { border-color: rgba(255,212,94,0.6); background: rgba(255,212,94,0.1); }
@@ -39,7 +59,8 @@
     </style>
 </head>
 <!-- UC05 step 2 (and extension 2a when outcome=none).
-     URL parameters: outcome = win | lose | tie | none, game, score, team.
+     URL parameters: outcome = win | lose | tie | played | none, game, score (team total), team,
+     players = JSON list [{"name": "...", "score": "..."}] from the venue PC (/api/scores).
      Wording stays positive for every outcome, and a low score is never displayed (requirement). -->
 <body>
     <div class="backdrop" id="backdrop"></div>
@@ -50,6 +71,8 @@
         <h1 id="title" class="pop">Thanks for playing!</h1>
         <div class="game" id="game"></div>
         <div class="score pop" id="scoreBox"><div class="num" id="score"></div><div class="unit">Team points</div></div>
+        <div class="total" id="total">Team total<b id="totalNum"></b></div>
+        <div class="players-box" id="playersBox"><div class="players-heading">PLAYER SCORES</div><div id="playersRows"></div></div>
         <p class="message" id="message"></p>
     </div>
     <script type="text/javascript">
@@ -57,12 +80,16 @@
         var game = uc05Param("game", "");
         var score = uc05Param("score", "");
         var team = uc05Param("team", "");
+        var playersText = uc05Param("players", "");
+        var players = [];
+        try { players = playersText ? JSON.parse(playersText) : []; } catch (e) { players = []; }
         var who = team ? uc05Esc(team) : "team";
 
         var texts = {
             win:  { kicker: "Victory", title: "Champions!", msg: "Amazing teamwork, " + who + ". You owned that mission!" },
             lose: { kicker: "Mission complete", title: "Great effort!", msg: "You stuck together right to the end, " + who + ". Every mission makes you stronger!" },
             tie:  { kicker: "Mission complete", title: "So close!", msg: "What a battle! Every one of you made a difference out there." },
+            played: { kicker: "Round complete", title: "Great game!", msg: "Nice work, everyone. Here are your scores." },
             none: { kicker: "Session complete", title: "Thanks for playing!", msg: "We hope you had a blast in the arena today." }
         };
         if (!texts[outcome]) { outcome = "none"; }
@@ -73,10 +100,45 @@
         document.getElementById("title").innerHTML = t.title;
         document.getElementById("message").innerHTML = t.msg;
         if (game && outcome !== "none") { document.getElementById("game").innerHTML = uc05Esc(game); }
-        // Only show the number when it is something to celebrate (win or tie).
-        if (score && (outcome === "win" || outcome === "tie")) {
-            document.getElementById("score").innerHTML = uc05Esc(score);
-            document.getElementById("scoreBox").style.display = "inline-block";
+        // keep only real player rows {name, score}
+        var list = [];
+        for (var i = 0; i < players.length; i++) {
+            if (players[i] && typeof players[i] === "object") { list.push(players[i]); }
+        }
+        var stage = document.getElementById("stage");
+        if (list.length) {
+            var n = list.length;
+            var cols = n <= 4 ? 1 : (n <= 10 ? 2 : 3);
+            var rowsCount = Math.ceil(n / cols);
+            var font = rowsCount <= 4 ? 2.45 : (rowsCount === 5 ? 2.2 : 1.9);      // vw
+            var html = "";
+            for (var j = 0; j < n; j++) {
+                var nm = String(list[j].name || "Player");
+                var sc = String(list[j].score === undefined || list[j].score === null || list[j].score === "" ? "0" : list[j].score);
+                // points first (float right), then the name, cut with "..." if it is too long
+                html += "<div class='pcell' style='width:" + (100 / cols - 2).toFixed(2) + "%;font-size:" + font + "vw'>" +
+                        "<span class='pts'>" + uc05Esc(sc) + " pts</span>" +
+                        "<span class='pname' style='max-width:" + (cols === 1 ? 52 : (cols === 2 ? 21 : 12)) + "vw'>" + uc05Esc(nm) + "</span></div>";
+            }
+            document.getElementById("playersRows").innerHTML = html;
+            document.getElementById("playersBox").style.display = "block";
+            if (rowsCount > 3) { stage.className += " many"; }
+        }
+        // team total: sent by the server, or the sum of the player scores. Not shown for a low score (requirement).
+        var total = score;
+        if (!total && list.length) {
+            var sum = 0, ok = false;
+            for (var k = 0; k < list.length; k++) { var v = parseFloat(list[k].score); if (!isNaN(v)) { sum += v; ok = true; } }
+            if (ok && sum > 0) { total = String(Math.round(sum)); }
+        }
+        if (total && (outcome === "win" || outcome === "tie" || outcome === "played")) {
+            if (list.length) {
+                document.getElementById("totalNum").innerHTML = uc05Esc(total);
+                document.getElementById("total").style.display = "block";
+            } else {
+                document.getElementById("score").innerHTML = uc05Esc(total);
+                document.getElementById("scoreBox").style.display = "inline-block";
+            }
         }
         uc05SetBackdrop("backdrop", uc05GameArt(game));
 

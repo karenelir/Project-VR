@@ -34,23 +34,23 @@ body {
 
 .kicker {
     display: inline-block;
-    font-size: 1.15vw; font-weight: 700; letter-spacing: 4px; text-transform: uppercase;
+    font-size: 2.09vw; font-weight: 700; letter-spacing: 4px; text-transform: uppercase;
     color: #6ee7ff;
     padding-bottom: 0.5vh; border-bottom: 2px solid rgba(110,231,255,0.5);
     margin-bottom: 2.2vh;
 }
 h1 {
-    font-size: 4vw; line-height: 1.1; font-weight: 800; margin: 0 0 1.4vh 0;
+    font-size: 5.52vw; line-height: 1.1; font-weight: 800; margin: 0 0 1.4vh 0;
     text-shadow: 0 0.3vw 1.5vw rgba(0,0,0,0.5);
 }
-.subtitle { font-size: 1.7vw; line-height: 1.4; color: #c3c7de; margin: 0 0 4vh 0; max-width: 60vw; }
-.hint { font-size: 1.3vw; color: #8f95b2; margin-top: 3.5vh; }
+.subtitle { font-size: 3.09vw; line-height: 1.4; color: #c3c7de; margin: 0 0 4vh 0; max-width: 84vw; }
+.hint { font-size: 2.37vw; color: #8f95b2; margin-top: 3.5vh; }
 
 /* Chamfered buttons, same shape as UC02 */
 .btn {
     -webkit-appearance: none; border: 0; cursor: pointer; font: inherit;
-    font-weight: 800; font-size: 1.7vw; letter-spacing: 1.5px; text-transform: uppercase;
-    padding: 2.1vh 3vw; color: #f4f1ff;
+    font-weight: 800; font-size: 3.09vw; letter-spacing: 1.5px; text-transform: uppercase;
+    padding: 2.9vh 4vw; color: #f4f1ff;
     background: rgba(255,255,255,0.07);
     border: 2px solid rgba(255,255,255,0.2);
     -webkit-clip-path: polygon(1.1vw 0, 100% 0, 100% calc(100% - 1.1vw), calc(100% - 1.1vw) 100%, 0 100%, 0 1.1vw);
@@ -60,7 +60,7 @@ h1 {
 }
 .btn:active { -webkit-transform: scale(0.94); transform: scale(0.94); }
 .btn.primary { background: linear-gradient(135deg, #39e2c6, #1f9ad6); color: #06151a; border-color: transparent; }
-.btn.ghost { background: transparent; color: #c3c7de; border-color: rgba(195,199,222,0.35); font-size: 1.4vw; padding: 1.6vh 2.4vw; }
+.btn.ghost { background: transparent; color: #c3c7de; border-color: rgba(195,199,222,0.35); font-size: 2.55vw; padding: 2.4vh 3.4vw; }
 .btn.chosen { -webkit-box-shadow: 0 0 0 0.4vw #6ee7ff; box-shadow: 0 0 0 0.4vw #6ee7ff; }
 
 /* After a tap: lock the page so a second tap cannot raise a second event */
@@ -80,3 +80,14 @@ body.locked .btn.fade { opacity: .3; }
 .dots span:nth-child(3) { -webkit-animation-delay: .4s; animation-delay: .4s; }
 @-webkit-keyframes blink { 0%, 100% { opacity: .25; } 50% { opacity: 1; } }
 @keyframes blink { 0%, 100% { opacity: .25; } 50% { opacity: 1; } }
+
+/* ---------- navigation buttons: "Back to photo options" / "Continue to rating" / "No thanks" ---------- */
+.navrow { display: flex; flex-direction: row; justify-content: center; align-items: center; margin-top: 1vh; }
+.navrow .btn { margin: 0 1vw; }
+.btn.nav { white-space: nowrap; text-transform: none; letter-spacing: 0.3px; font-size: 2.4vw; padding: 2.4vh 3vw;
+           display: inline-flex; align-items: center; }
+.btn.nav svg { width: 2.6vw; height: 2.6vw; flex: 0 0 auto; stroke: currentColor; }
+.btn.nav .l { margin-right: 1vw; }
+.btn.nav .r { margin-left: 1vw; }
+.btn.nav-back { background: rgba(255,255,255,0.06); color: #e7eaf6; border-color: rgba(255,255,255,0.35); }
+.btn.nav-next { background: linear-gradient(135deg, #39e2c6, #1f9ad6); color: #06151a; border-color: transparent; }

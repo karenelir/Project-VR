@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Pick Pepper's pose</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="../css/uc05.css">
+    <script src="/libs/qi/2/qi.js"></script>
+    <script src="../js/jquery.js"></script>
+    <script src="../js/qievents.js"></script>
+    <script src="../js/uc05.js"></script>
+    <style>
+        .poses { display: flex; flex-direction: row; justify-content: center; margin-bottom: 3vh; }
+        .pose { width: 22vw; margin: 0 0.7vw; padding: 4.5vh 1vw; text-transform: none; letter-spacing: 0.5px; font-size: 3.12vw; }
+        .pose svg { display: block; width: 7.8vw; height: 7.8vw; margin: 0 auto 1.6vh auto; stroke: #6ee7ff; }
+        /* no animations on this page: only the options */
+        .btn, .btn:active { -webkit-transition: none; transition: none; -webkit-transform: none; transform: none; }
+    </style>
+</head>
+<!-- UC05 step 4 (pose option): the group chooses Pepper's pose.
+     Tap a pose -> event poseChosen (value = champion | superstar | cool | hug)
+     "Back to photo options" -> event poseBack, "Continue to rating" -> event poseDone. Handled by the "Strike a Pose (step 4)" box.
+     ?again=1 is used after the first pose ("Another pose?"). -->
+<body>
+    <div class="backdrop" id="backdrop"></div>
+    <div class="backdrop-shade"></div>
+    <div class="stage">
+        <span class="kicker">Pose with Pepper</span>
+        <h1 id="title">Pick Pepper's pose</h1>
+        <p class="subtitle" id="sub">Pepper strikes it, you take the photo with your phones.</p>
+        <div class="poses">
+            <button type="button" class="btn pose" onclick="uc05Choose(this, 'poseChosen', 'champion')">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4 H17 V8 C17 11 15 13 12 13 C9 13 7 11 7 8 Z"/><path d="M7 6 H4 C4 9 5.5 10 7.5 10 M17 6 H20 C20 9 18.5 10 16.5 10 M12 13 V17 M8 20 H16 M9.5 17 H14.5 V20 H9.5 Z"/></svg>
+                The Champion</button>
+            <button type="button" class="btn pose" onclick="uc05Choose(this, 'poseChosen', 'superstar')">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5 L14.9 8.6 L21.5 9.4 L16.6 14 L17.9 20.6 L12 17.3 L6.1 20.6 L7.4 14 L2.5 9.4 L9.1 8.6 Z"/></svg>
+                The Superstar</button>
+            <button type="button" class="btn pose" onclick="uc05Choose(this, 'poseChosen', 'cool')">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9 H22 M3.5 9 L4.5 14 C4.8 15.4 6 16 7.5 16 H8.5 C10 16 11 15 11 13.5 V9 M20.5 9 L19.5 14 C19.2 15.4 18 16 16.5 16 H15.5 C14 16 13 15 13 13.5 V9"/></svg>
+                The Cool Robot</button>
+            <button type="button" class="btn pose" onclick="uc05Choose(this, 'poseChosen', 'hug')">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20 C5 15.5 3 12.5 3 9.2 C3 6.6 5 4.8 7.3 4.8 C9.2 4.8 10.8 6 12 7.6 C13.2 6 14.8 4.8 16.7 4.8 C19 4.8 21 6.6 21 9.2 C21 12.5 19 15.5 12 20 Z"/></svg>
+                The Group Hug</button>
+        </div>
+        <div class="navrow">
+            <button type="button" class="btn nav nav-back" onclick="uc05Choose(this, 'poseBack', 1)"><svg class="l" viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12 H5 M11 6 L5 12 L11 18"/></svg>Back to photo options</button>
+            <button type="button" class="btn nav nav-next" onclick="uc05Choose(this, 'poseDone', 1)">Continue to rating<svg class="r" viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12 H19 M13 6 L19 12 L13 18"/></svg></button>
+        </div>
+    </div>
+    <script type="text/javascript">
+        uc05SetBackdrop("backdrop", "../pics/zerovr.png");
+        if (uc05Param("again", "") === "1") {
+            document.getElementById("title").innerHTML = "Another pose?";
+            document.getElementById("sub").innerHTML = "Pick one more, go back to the photo options, or continue to the rating.";
+        }
+    </script>
+</body>
+</html>

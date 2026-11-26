@@ -5,7 +5,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="../css/uc05.css">
+    <script src="/libs/qi/2/qi.js"></script>
+    <script src="../js/jquery.js"></script>
+    <script src="../js/qievents.js"></script>
     <script src="../js/uc05.js"></script>
+    <script src="../js/qrcode.js"></script>
     <style>
         .stage { flex-direction: row; }
         .frame {
@@ -14,18 +18,34 @@
             -webkit-box-shadow: 0 1.5vw 4vw rgba(0,0,0,0.6); box-shadow: 0 1.5vw 4vw rgba(0,0,0,0.6);
             -webkit-animation: drop .7s ease-out both; animation: drop .7s ease-out both;
         }
-        .frame .pic { width: 44vw; height: 33vw; background: #1a1d2b center / cover no-repeat;
+        .frame .pic { width: 46vw; height: 34.5vw; background: #1a1d2b center / cover no-repeat;
                       display: flex; align-items: center; justify-content: center; }
         .frame .pic svg { width: 22%; stroke: #6ee7ff; opacity: .7; }
-        .frame .caption { color: #10131c; font-size: 1.7vw; font-weight: 700; margin-top: 2vh; text-align: center; }
-        .side { padding-left: 5vw; text-align: left; max-width: 36vw; }
-        .side h1 { font-size: 3.6vw; }
+        .frame .caption { color: #10131c; font-size: 3.09vw; font-weight: 700; margin-top: 2vh; text-align: center; }
+        .side { padding-left: 3.5vw; text-align: left; max-width: 44vw; }
+        .side h1 { font-size: 4.2vw; margin-bottom: 1vh; }
+        .side .subtitle { margin-bottom: 2.5vh; }
+        .qrbox { display: none; flex-direction: row; align-items: center; margin-bottom: 3vh;
+                 background: rgba(255,255,255,0.06); border: 2px solid rgba(110,231,255,0.35); padding: 1.2vw; }
+        .qrbox.on { display: flex; }
+        #qr { background: #ffffff; padding: 0.6vw; line-height: 0; }
+        #qr img { width: 15vw; height: 15vw; display: block; image-rendering: pixelated; }
+        .qrtext { padding-left: 1.6vw; font-size: 2vw; line-height: 1.35; color: #c3c7de; }
+        .qrtext b { display: block; color: #f4f1ff; font-size: 2.4vw; margin-bottom: 0.6vh; }
+        .actions { display: flex; flex-direction: row; align-items: center; }
+        .actions .btn { margin-right: 1.4vw; text-align: center; }
+        .actions .btn.nav { font-size: 2.2vw; padding: 2.2vh 2.2vw; }
+        body.hasqr #sub { display: none; }
         @-webkit-keyframes drop { 0% { -webkit-transform: translateY(-8vh) rotate(-8deg); opacity: 0; } 100% { -webkit-transform: rotate(-2.5deg); opacity: 1; } }
         @keyframes drop { 0% { transform: translateY(-8vh) rotate(-8deg); opacity: 0; } 100% { transform: rotate(-2.5deg); opacity: 1; } }
     </style>
 </head>
 <!-- UC05 step 4 result. URL parameters: photo (path under ../pics/, e.g. photos/team_123.jpg), game.
-     With no photo (camera not available / simulated prototype) a placeholder is shown instead. -->
+     With no photo (camera not available / simulated prototype) a placeholder is shown instead.
+     qr = link to the photo on Pepper's web server (http://<Pepper Wi-Fi IP>/apps/<app>/pics/photos/...):
+     shown as a QR code next to the photo, phones on the same Wi-Fi can scan it and save the photo.
+     The photo stays until a button is tapped: "Rating" -> event photoExit (on to the rating),
+     "Photo options" -> event photoBack ("who takes the photo?" again). -->
 <body>
     <div class="backdrop" id="backdrop"></div>
     <div class="backdrop-shade"></div>
@@ -42,6 +62,14 @@
             <span class="kicker">Got it</span>
             <h1>Looking great, team!</h1>
             <p class="subtitle" id="sub">A moment to remember from your mission.</p>
+            <div class="qrbox" id="qrbox">
+                <div id="qr"></div>
+                <div class="qrtext"><b>Scan to save your photo</b>Your phone must be on the same Wi-Fi as Pepper.</div>
+            </div>
+            <div class="actions">
+                <button type="button" class="btn nav nav-back" onclick="uc05Choose(this, 'photoBack', 1)"><svg class="l" viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12 H5 M11 6 L5 12 L11 18"/></svg>Photo options</button>
+                <button type="button" class="btn nav nav-next" onclick="uc05Choose(this, 'photoExit', 1)">Rating<svg class="r" viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12 H19 M13 6 L19 12 L13 18"/></svg></button>
+            </div>
         </div>
     </div>
     <script type="text/javascript">
@@ -59,6 +87,18 @@
             img.src = "../pics/" + photo;
         } else {
             document.getElementById("sub").innerHTML = "Camera simulated in this prototype.";
+        }
+        // QR code next to the photo: link to the photo on Pepper's own web server (same Wi-Fi only)
+        var qrLink = uc05Param("qr", "");
+        if (qrLink && typeof qrcode !== "undefined") {
+            try {
+                var q = qrcode(0, "M");
+                q.addData(qrLink);
+                q.make();
+                document.getElementById("qr").innerHTML = q.createImgTag(6, 0, "QR code");
+                document.getElementById("qrbox").className = "qrbox on";
+                document.body.className += " hasqr";
+            } catch (e) { console.log("QR error: " + e); }
         }
     </script>
 </body>

@@ -39,3 +39,18 @@ function uc05Choose(btn, eventName, eventValue) {
 function uc05Esc(s) {
     return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
+
+// Tell Pepper this page is really on the screen (ALMemory event "pageReady" = page file name),
+// so the "Ask" boxes only start talking once the page is visible.
+(function () {
+    function ready() {
+        try {
+            if (!window.QiSession) { return; }
+            var page = window.location.pathname.split("/").pop();
+            QiSession(function (session) {
+                session.service("ALMemory").then(function (mem) { mem.raiseEvent("pageReady", page); });
+            }, function () {});
+        } catch (e) {}
+    }
+    if (document.readyState === "complete") { ready(); } else { window.addEventListener("load", ready); }
+})();

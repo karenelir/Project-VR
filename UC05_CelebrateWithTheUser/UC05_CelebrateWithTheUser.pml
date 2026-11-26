@@ -4,10 +4,7 @@
     <BehaviorDescriptions>
         <BehaviorDescription name="behavior" src="behavior_1" xar="behavior.xar" />
     </BehaviorDescriptions>
-    <Dialogs>
-        <Dialog name="photo_d" src="photo_d/photo_d.dlg" />
-        <Dialog name="rating_d" src="rating_d/rating_d.dlg" />
-    </Dialogs>
+    <Dialogs />
     <Resources>
         <File name="all" src="html/css/all.css" />
         <File name="formatting" src="html/css/formatting.css" />
@@ -63,13 +60,15 @@
         <File name="fa-solid-900" src="html/webfonts/fa-solid-900.woff" />
         <File name="fa-solid-900" src="html/webfonts/fa-solid-900.woff2" />
         <File name="applause" src="sounds/applause.ogg" />
+        <File name="dance" src="sounds/dance.ogg" />
+        <File name="photomode" src="html/pages/photomode.html" />
+        <File name="posechoice" src="html/pages/posechoice.html" />
+        <File name="photologo" src="html/pages/photologo.html" />
+        <File name="qrcode" src="html/js/qrcode.js" />
         <File name="README" src="README.md" />
         <File name="" src="html/pics/photos/.keep" />
     </Resources>
-    <Topics>
-        <Topic name="photo_d_enu" src="photo_d/photo_d_enu.top" topicName="photo_d" language="en_US" />
-        <Topic name="rating_d_enu" src="rating_d/rating_d_enu.top" topicName="rating_d" language="en_US" />
-    </Topics>
+    <Topics />
     <IgnoredPaths />
     <Translations auto-fill="en_US">
         <Translation name="translation_en_US" src="translations/translation_en_US.ts" language="en_US" />

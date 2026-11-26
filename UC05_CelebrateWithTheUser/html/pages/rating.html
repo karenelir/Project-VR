@@ -10,51 +10,63 @@
     <script src="../js/qievents.js"></script>
     <script src="../js/uc05.js"></script>
     <style>
-        .scale { display: flex; flex-direction: row; justify-content: center; margin-bottom: 1.6vh; }
-        .rate {
-            width: 7.4vw; height: 7.4vw; margin: 0 0.6vw; padding: 0;
-            font-size: 3vw; letter-spacing: 0; text-transform: none;
-            display: flex; align-items: center; justify-content: center;
+        .stars { display: flex; flex-direction: row; justify-content: center; margin-bottom: 2vh; }
+        .star {
+            -webkit-appearance: none; border: 0; background: transparent; cursor: pointer; padding: 0 0.8vw;
+            -webkit-transition: -webkit-transform .15s ease; transition: transform .15s ease;
         }
-        /* one calm colour ramp: no "red = bad" shaming for low numbers */
-        .r1, .r2  { background: rgba(110,231,255,0.07); }
-        .r3, .r4  { background: rgba(110,231,255,0.11); }
-        .r5, .r6  { background: rgba(110,231,255,0.16); }
-        .r7, .r8  { background: rgba(57,226,198,0.22); }
-        .r9, .r10 { background: rgba(57,226,198,0.32); }
-        .rate.chosen { background: linear-gradient(135deg, #39e2c6, #1f9ad6); color: #06151a; }
-        .ends { width: 46vw; display: flex; flex-direction: row; justify-content: space-between;
-                font-size: 1.3vw; color: #8f95b2; margin-bottom: 4vh; }
+        .star:active { -webkit-transform: scale(0.88); transform: scale(0.88); }
+        .star svg { width: 14vw; height: 14vw; display: block; }
+        .star path { fill: rgba(255,255,255,0.06); stroke: rgba(255,212,94,0.55); stroke-width: 1.2; stroke-linejoin: round;
+                     -webkit-transition: fill .2s ease; transition: fill .2s ease; }
+        .star.on path { fill: #ffd45e; stroke: #ffd45e; }
+        .star.on svg { -webkit-filter: drop-shadow(0 0 1.2vw rgba(255,212,94,0.55)); filter: drop-shadow(0 0 1.2vw rgba(255,212,94,0.55)); }
+        #label { font-size: 3.64vw; font-weight: 800; color: #ffd45e; min-height: 4vw; margin-bottom: 3.5vh; }
+        body.locked .star { pointer-events: none; }
     </style>
 </head>
-<!-- UC05 step 5: rating from 1 to 10 (speech is the alternative, handled by rating_d).
-     1-4 -> event ratingLow, 5-6 -> ratingOk, 7-10 -> ratingHigh (value = the number).
+<!-- UC05 step 5: rating from 1 to 5 stars (speech is the alternative, handled by rating_d).
+     1-2 stars -> event ratingLow, 3 -> ratingOk, 4-5 -> ratingHigh (value = number of stars).
      "No thanks" -> event ratingDeclined (extension 5a). -->
 <body>
     <div class="backdrop" id="backdrop"></div>
     <div class="backdrop-shade"></div>
     <div class="stage">
         <span class="kicker">Your opinion</span>
-        <h1>How was your experience?</h1>
-        <p class="subtitle">Tap a number from 1 to 10, or just say it to Pepper.</p>
-        <div class="scale" id="row1"></div>
-        <div class="scale" id="row2"></div>
-        <div class="ends"><span>1 &middot; Not great</span><span>10 &middot; Amazing</span></div>
+        <h1>How many stars?</h1>
+        <p class="subtitle">Tap a star, or just tell Pepper.</p>
+        <div class="stars" id="stars"></div>
+        <div id="label"></div>
         <button type="button" class="btn ghost" onclick="uc05Choose(this, 'ratingDeclined', 1)">No thanks</button>
     </div>
     <script type="text/javascript">
         uc05SetBackdrop("backdrop", "../pics/zerovr.png");
-        function eventFor(n) { return n <= 4 ? "ratingLow" : (n <= 6 ? "ratingOk" : "ratingHigh"); }
-        function makeButton(n) {
-            var b = document.createElement("button");
-            b.type = "button";
-            b.className = "btn rate r" + n;
-            b.innerHTML = n;
-            b.onclick = function () { uc05Choose(b, eventFor(n), n); };
-            return b;
+        var labels = ["", "Not great", "Could be better", "Pretty good", "Really fun!", "Amazing!"];
+        var STAR = '<svg viewBox="0 0 24 24"><path d="M12 2.5 L14.9 8.6 L21.5 9.4 L16.6 14 L17.9 20.6 L12 17.3 L6.1 20.6 L7.4 14 L2.5 9.4 L9.1 8.6 Z"/></svg>';
+        var row = document.getElementById("stars");
+        var stars = [];
+
+        function eventFor(n) { return n <= 2 ? "ratingLow" : (n === 3 ? "ratingOk" : "ratingHigh"); }
+        function light(n) {
+            for (var i = 0; i < stars.length; i++) {
+                stars[i].className = (i < n) ? "star on" : "star";
+            }
+            document.getElementById("label").innerHTML = labels[n] || "";
         }
-        for (var n = 1; n <= 10; n++) {
-            document.getElementById(n <= 5 ? "row1" : "row2").appendChild(makeButton(n));
+        function pick(n) {
+            if (document.body.className.indexOf("locked") !== -1) { return; }
+            light(n);
+            document.body.className += " locked";
+            setTimeout(function () { raiseEvent(eventFor(n), n); }, 500);   // let them see their stars light up
+        }
+        for (var n = 1; n <= 5; n++) {
+            (function (k) {
+                var b = document.createElement("button");
+                b.type = "button"; b.className = "star"; b.innerHTML = STAR;
+                b.setAttribute("aria-label", k + " stars");
+                b.onclick = function () { pick(k); };
+                row.appendChild(b); stars.push(b);
+            })(n);
         }
     </script>
 </body>
